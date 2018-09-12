@@ -2,6 +2,7 @@
 
 type DATE = (int * int * int)
 exception InvalidParameter
+exception Factorial
 
 (* This file is where your solutions go *)
 
@@ -53,3 +54,9 @@ fun dates_in_months( date_list : DATE list, month_list : int list ): DATE list =
     if null month_list then []
     else dates_in_month( date_list, hd month_list ) @ dates_in_months( date_list, tl month_list );
 
+(* GET NTH TODO Check to see if InvalidParamter is being raised properly*)
+fun get_nth( string_list : string list, nth : int ): string =
+    if nth < 1 then raise InvalidParameter
+    else if nth > length string_list then raise InvalidParameter
+    else if nth = 1 then hd string_list
+    else get_nth( tl string_list, nth-1 );
