@@ -1,8 +1,8 @@
 (*  Assignment #1 *)
 
 type DATE = (int * int * int)
+val month_strings = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
 exception InvalidParameter
-exception Factorial
 
 (* This file is where your solutions go *)
 
@@ -60,3 +60,7 @@ fun get_nth( string_list : string list, nth : int ): string =
     else if nth > length string_list then raise InvalidParameter
     else if nth = 1 then hd string_list
     else get_nth( tl string_list, nth-1 );
+
+
+fun date_to_string( date : DATE ): string =
+    get_nth( month_strings, (#2 date) ) ^ " " ^ Int.toString( #3 date ) ^ ", " ^ Int.toString( #1 date );
