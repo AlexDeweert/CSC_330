@@ -35,12 +35,12 @@ val test2b = number_in_month([feb28_2012,dec1_2013,feb12_2011,march31_2011,april
 
 val test3a = number_in_months([feb28_2012,dec1_2013,march31_2011,april28_2011],[2,3,4]) = 3;
 
-(*
 val test4  = dates_in_month([feb28_2012,dec1_2013],2) = [feb28_2012];
+
 val test4a = dates_in_month([feb28_2012,dec1_2013],12) = [dec1_2013];
 val test4b = dates_in_month([feb28_2012,dec1_2013],3) = [];
 val test4c = dates_in_month([feb28_2012,feb12_2011,dec1_2013],2) = [feb28_2012,feb12_2011];
-
+(*
 val test5a = dates_in_months([feb28_2012,dec1_2013,march31_2011,april28_2011],[2,3,4]) = [feb28_2012,march31_2011,april28_2011];
                                                                                              
 val test5d = dates_in_months([feb28_2012,dec1_2013,march31_2011,april28_2011],[5,7]) = [];
