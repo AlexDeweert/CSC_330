@@ -49,4 +49,7 @@ fun dates_in_month( date_list : DATE list, month : int ): DATE list =
     else dates_in_month( tl date_list, month );
 
 (* DATES IN MONTHS *)
+fun dates_in_months( date_list : DATE list, month_list : int list ): DATE list =
+    if null month_list then []
+    else dates_in_month( date_list, hd month_list ) @ dates_in_months( date_list, tl month_list );
 
