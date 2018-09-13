@@ -53,12 +53,13 @@ val test6c = get_nth([], 0) = "never" handle InvalidParameter => true;
 val test7 = date_to_string(june1_2013) = "June 1, 2013";
 
 val test7a = date_to_string(april28_2011) = "April 28, 2011";
-(*
+
 val test8 = number_before_reaching_sum(10, [1,2,3,4,5]) = 3
 val test8a = number_before_reaching_sum(10, [11,1,2,3,4,5]) = 0
 val test8b = number_before_reaching_sum(12, [11,1,2,3,4,5]) = 1
 val test8c = number_before_reaching_sum(1, [1,2,3,4,5]) = 0;
 val test8d = number_before_reaching_sum(6, [1,2,3,4,5]) = 2;
+(*
 
 val test9  = what_month(70) = 3;
 val test9a = what_month(31) = 1;

@@ -61,6 +61,21 @@ fun get_nth( string_list : string list, nth : int ): string =
     else if nth = 1 then hd string_list
     else get_nth( tl string_list, nth-1 );
 
-
+(* DATE TO STRING *)
 fun date_to_string( date : DATE ): string =
     get_nth( month_strings, (#2 date) ) ^ " " ^ Int.toString( #3 date ) ^ ", " ^ Int.toString( #1 date );
+
+(*Utility Function - SUM INTS*)
+fun sum_ints( int_list : int list ): int =
+    if null int_list then 0
+    else (hd int_list) + sum_ints( (tl int_list) );
+(*
+val intas = [1,2,3];
+val sumintas = sum_ints(intas) = 6; *)
+
+(* NUMBER BEFORE REACHING SUM*)
+fun number_before_reaching_sum( sum : int, int_list : int list ): int =
+    if null int_list then 0
+    else if sum - hd int_list > 0 then 1 + number_before_reaching_sum( sum - hd int_list, tl int_list )
+    else 0
+
