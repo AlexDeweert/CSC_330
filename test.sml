@@ -71,7 +71,7 @@ val test93 = what_month(1) = 1;
 val test94 = what_month(32) = 2;
 val test95 = what_month(365) = 12;
 val test96 = what_month(364) = 12;
-(*
+
 val test10 = month_range(31, 34) = [1,2,2,2];
 val test10a = month_range(360, 365) = [12,12,12,12,12,12];
 val test10b = month_range(31,31 + 28 +1) = [1,
@@ -80,7 +80,7 @@ val test10b = month_range(31,31 + 28 +1) = [1,
 val test10c = month_range(35, 34) = [];
 val test10d = month_range(35, 35) = [2];
 val test10e = month_range(31+29, 31+29) = [3];
-
+(*
 val test11 = oldest([feb28_2012,march31_2011,april28_2011]) = SOME march31_2011;
 val test11a = oldest([april28_2011]) = SOME april28_2011;
 val test11b = oldest([]) = NONE;
