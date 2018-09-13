@@ -3,7 +3,7 @@
 type DATE = (int * int * int)
 val month_strings = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
 exception InvalidParameter
-
+val test_date = (2012,2,28)
 (* This file is where your solutions go *)
 
 (* utility functions *)
@@ -83,6 +83,13 @@ fun number_before_reaching_sum( sum : int, int_list : int list ): int =
 fun what_month( num_days : int ): int =
     number_before_reaching_sum( num_days, [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]) + 1;
 
+(*MONTH RANGE*)
 fun month_range( day1 : int, day2 : int ): int list =
-    if day1 = day2 then [ what_month( day1 ) ]
+    if day1 > day2 then []
+    else if day1 = day2 then [ what_month( day1 ) ]
     else what_month( day1 ) :: month_range( day1+1, day2 );
+
+(*OLDEST*)
+fun oldest( date_list : DATE list ): =
+    if null date_list then NONE
+    else SOME test_date;

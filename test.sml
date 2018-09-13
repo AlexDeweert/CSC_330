@@ -80,10 +80,10 @@ val test10b = month_range(31,31 + 28 +1) = [1,
 val test10c = month_range(35, 34) = [];
 val test10d = month_range(35, 35) = [2];
 val test10e = month_range(31+29, 31+29) = [3];
-(*
 val test11 = oldest([feb28_2012,march31_2011,april28_2011]) = SOME march31_2011;
 val test11a = oldest([april28_2011]) = SOME april28_2011;
 val test11b = oldest([]) = NONE;
+(*
 
 val test12 = reasonable_date( 2014,  12,  31);
 val test12a = not (reasonable_date ( 2015,  2,  29));
