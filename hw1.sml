@@ -79,3 +79,5 @@ fun number_before_reaching_sum( sum : int, int_list : int list ): int =
     else if sum - hd int_list > 0 then 1 + number_before_reaching_sum( sum - hd int_list, tl int_list )
     else 0
 
+fun what_month( num_days : int ): int =
+    number_before_reaching_sum( num_days, [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]) + 1;

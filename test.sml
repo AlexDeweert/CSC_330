@@ -59,7 +59,7 @@ val test8a = number_before_reaching_sum(10, [11,1,2,3,4,5]) = 0
 val test8b = number_before_reaching_sum(12, [11,1,2,3,4,5]) = 1
 val test8c = number_before_reaching_sum(1, [1,2,3,4,5]) = 0;
 val test8d = number_before_reaching_sum(6, [1,2,3,4,5]) = 2;
-(*
+
 
 val test9  = what_month(70) = 3;
 val test9a = what_month(31) = 1;
@@ -71,7 +71,7 @@ val test93 = what_month(1) = 1;
 val test94 = what_month(32) = 2;
 val test95 = what_month(365) = 12;
 val test96 = what_month(364) = 12;
-
+(*
 val test10 = month_range(31, 34) = [1,2,2,2];
 val test10a = month_range(360, 365) = [12,12,12,12,12,12];
 val test10b = month_range(31,31 + 28 +1) = [1,
