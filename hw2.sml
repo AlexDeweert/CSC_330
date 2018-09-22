@@ -99,56 +99,68 @@ fun get_substitutions2( xss : string list list, str : string ) =
     in
         aux( xss, [] )
     end;
-(*
 
-(*Gets a str and string list, returns all except the str*)
-fun helper2( e : string * (string list) ) =
-    case e of
-        (*One element*)
-        (str, [a]) => (
-            if same_string(str,a) then []
-            else [a]
-        ) 
-        (*At least two elements*)
-      | (str, head::(neck::rest)) => (
-            helper(str,[head])@helper(str,neck::rest)
-        );
+(*similar_names*)
 
-fun lists_equivalent( e : (string list) * (string list) ) =
-    case e of
-          ([],[]) => ( true )
-        | ( [a],[b] ) => ( if same_string(a,b) then true else false )
-        | ( a::(b::c), d::(e::f) ) => ( if same_string(a,d) then lists_equivalent( b::c, e::f ) else false );
-*)
+(*type type_fullname = { first: string, middle: string, last: string }*)
+(*type fullname = {first: string, middle: string, last: string};*)
 
-(*1.2 get_substitutions1*)
-(*TODO rename this to get_substitutions1*)
-(*Need to check if the output list from helper2 = the original input list
-if it does, then we don't want to include the result int the final output
-of get_subs1
-After a recursive call we could go through and check if the returned list
-is equivalent to the orig input, then return null if it is
-*)
+(*pattern match a tuple*)
+fun first( a, _,  _ ) = a;
+fun second( _, b, _ ) = b;
+fun third( _, _, c ) = c;
 
-(*
-fun get_substitutions1 ( e : string list list * string ) =
-    
+(*LESSON: PATTERN MATCHING on records can be achieved; ie in getfirst helper*)
+fun similar_names ( xss : string list list, name : {first:string,middle:string,last:string} ) =
     let
-        fun listcheck( a : string list, str : string ): string list =
-            let val option_removed_list = helper2(str,a) in
-            if lists_equivalent( option_removed_list, a ) then [] else option_removed_list end
+        fun getfirst( x : {first:string,middle:string,last:string} ) =
+            case x of {first=e1,middle=e2,last=e3} => e1
+
+        fun getmiddle( x : {first:string,middle:string,last:string} ) =
+            case x of {first=e1,middle=e2,last=e3} => e2
+        
+        fun getlast( x : {first:string,middle:string,last:string} ) =
+            case x of {first=e1,middle=e2,last=e3} => e3
+
+        fun getsubs( xss' : string list list, first' : string  ) =
+            get_substitutions2( xss', first' )
+
+        fun make_similar( subs' : string list, acc : {first:string,middle:string,last:string} list ) =
+            case subs' of [] => acc
+            | a::[] => make_similar( [], acc@[{ first=(a), middle=getmiddle(name), last=getlast(name) }] )
+            | a::b => make_similar( b, acc@[{ first=(a), middle=getmiddle(name), last=getlast(name) }] )
     in
-        case e of
-            (*Exactly one list*)
-            ( a::[], str) => helper2(str,a)
+        (*
+            We get a list of lists, which have first names
+            we also get a full name
 
-            (*At least two lists and...*)
-            (*...at least one element in both lists*)
-            (*Note here, a is a list, c is a list*)
-          | ( a::(b::c), str ) => ( listcheck(a, str)@get_substitutions1(b::c, str) )
+            we want to use the FIRST part of the full name to call getsubstitutions2( getfirst(name) )
+            
+            With that, we get back a list of names where the FIRST of the FULLNAME was present
+            within each element in the list-list.
+
+            For all of those elements returned by getsubs2, we replace the FIRST part of FULLNAME
+            and append that to a growing accumulator (since we're returning a list of FULLNAMES)
+            We ALSO want to return the original FULLNAME.
+        *)
+        let val subs = getsubs( xss, getfirst(name) )
+        in
+            (*[getfirst( name )]*)
+            make_similar( subs, [name] )
+        end
     end;
+
+similar_names( [ ["john","bob","conway"],["dog","ed"],["fred","holmes"] ], {first="bob",middle="j",last="odenkirk"} );
+
+(*
+
+type mytype = { first:int, mid:int, last:int };
+
+fun f( x: mytype ) =
+    #first x;
+
+f( {first=1, mid=2, last=3} );
+
+(*results in val it = 2 : int*)
+
 *)
-
-(*get_substitutions1( [ ["joe","zoey","ryker"], ["murphy","ryker","stinky"], ["a","ryker","c"] ], "ryker" );*)
-
-(*get_substitutions1( [ ["Fred","Fredrick"], ["Elizabeth","Betty"], ["Freddie","Fred","F"] ], "Fred");*)
