@@ -22,6 +22,8 @@ datatype move = Discard of card | Draw
 
 exception IllegalMove
 
+exception notFound
+
 (****)
 
 (* Curried function: fun foo a b = a + b;
@@ -167,8 +169,8 @@ fun card_color( x : card ) =
         getcolor(getsuit(x))
     end;
 
-(*6 get_value*)
-fun get_value( x : card ) =
+(*6 card_value*)
+fun card_value( x : card ) =
     let
         fun getrank( r : rank ) =
             case r of Jack => 10 | Queen => 10 | King => 10 
@@ -179,19 +181,25 @@ fun get_value( x : card ) =
     end;
 
 (*7. remove_card *)
-fun remove_card( cs : card list, c : card ) =
+fun remove_card( cs : card list, c : card, e : exn ) =
     let
         fun iter( cs' : card list, acc : card list ) =
             case cs' of [] => acc
-            | a::[] => if a = c then iter( [], acc ) else iter( [], acc@[a] )
-            | a::b::[] => if a = c then iter( [b], acc ) else iter( [b], acc@[a] )
-            | a::b::rest => if a = c then iter( b::rest, acc ) else iter( b::rest, acc@[a])
+            | a::[] => if  a = c then acc else iter( [], acc@[a] )
+            | a::b::[] => if a = c then acc@[b] else iter( [b], acc@[a] )
+            | a::b::rest => if a = c then acc@b::rest else iter( b::rest, acc@[a])
     in
-        iter( cs, [] )
+        let
+            val result = iter( cs, [] )
+        in
+            if result = cs then raise e
+            else result
+        end
     end
 
 val lst = [ (Spades,Ace),(Hearts, Num 5),(Clubs, Jack) ];
-remove_card( lst, (Clubs, Jack) );
+exception NotFound;
+remove_card( lst, (Clubs, Jack), NotFound );
 
 (*8. all_same_color*)
 fun all_same_color( cs : card list ) =
@@ -227,13 +235,30 @@ fun sum_cards( xs : card list ) =
     let
         fun aux( xs' : card list, acc : int ) =
             case xs' of [] => acc
-            | a::[] => aux( [], get_value(a) + acc )
-            | a::b => aux( b, get_value(a) + acc )
+            | a::[] => aux( [], card_value(a) + acc )
+            | a::b => aux( b, card_value(a) + acc )
     in
         aux( xs, 0 )
     end;
 
 sum_cards( [ (Spades,Ace),(Diamonds,Queen),(Clubs,Num 2) ] );
+
+(*10. score*)
+fun score( hand : card list, goal : int ) =
+    let
+        val sum = sum_cards(hand)
+        fun preliminary_score( sum' : int ) =
+            if sum' > goal then 2*(sum'-goal) else (goal-sum')
+        fun final_score( prelim_score : int ) =
+            if not(all_same_color(hand)) then prelim_score else prelim_score div 2
+    in
+        final_score( preliminary_score( sum ) )
+    end;
+
+val cards1 = [(Clubs, Ace), (Diamonds, Num 10), (Spades, Num 4), (Clubs, Num 4)];
+val test10_1 = score(cards1, 1) = 28 * 2;
+
+(*11. officiate*)
 
 (*
 
