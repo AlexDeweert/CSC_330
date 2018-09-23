@@ -152,6 +152,89 @@ fun similar_names ( xss : string list list, name : {first:string,middle:string,l
 
 similar_names( [ ["john","bob","conway"],["dog","ed"],["fred","holmes"] ], {first="bob",middle="j",last="odenkirk"} );
 
+(*5. card_color*)
+fun card_color( x : card ) =
+    let
+        fun getsuit( x' : card ) =
+            case x' of (suit,rank) => suit
+
+        fun getcolor( suit' : suit ) =
+            case suit' of Clubs => Black
+            | Spades => Black
+            | Hearts => Red
+            | Diamonds => Red
+    in
+        getcolor(getsuit(x))
+    end;
+
+(*6 get_value*)
+fun get_value( x : card ) =
+    let
+        fun getrank( r : rank ) =
+            case r of Jack => 10 | Queen => 10 | King => 10 
+            | Ace => 11
+            | Num(i) => i
+    in
+        case x of (suit,rank) => getrank(rank)
+    end;
+
+(*7. remove_card *)
+fun remove_card( cs : card list, c : card ) =
+    let
+        fun iter( cs' : card list, acc : card list ) =
+            case cs' of [] => acc
+            | a::[] => if a = c then iter( [], acc ) else iter( [], acc@[a] )
+            | a::b::[] => if a = c then iter( [b], acc ) else iter( [b], acc@[a] )
+            | a::b::rest => if a = c then iter( b::rest, acc ) else iter( b::rest, acc@[a])
+    in
+        iter( cs, [] )
+    end
+
+val lst = [ (Spades,Ace),(Hearts, Num 5),(Clubs, Jack) ];
+remove_card( lst, (Clubs, Jack) );
+
+(*8. all_same_color*)
+fun all_same_color( cs : card list ) =
+    let
+        fun helper( cs' : card list, prev : card, acc : bool ) =
+            case cs' of [] => acc
+            | a::[] => if( acc andalso card_color(a) = card_color(prev))
+                       then helper( [], a, true ) 
+                       else helper( [], a, false )
+            | a::b::rest => if (acc andalso card_color(a) = card_color(b))
+                            then helper( b::rest, a, true ) 
+                            else helper( b::rest,a, false)
+    in
+        let 
+            fun result( cs' : card list ) = 
+                case cs' of [] => true
+                | a::[] => true
+                | a::b::rest => if helper( b::rest, a, true ) then true else false
+        in
+            if result(cs) then true else false
+        end
+    end;
+
+val test8_1 = all_same_color( [ (Spades,Ace),(Diamonds,Queen),(Clubs,Num 2) ] ) = false;
+val test8_2 = all_same_color( [ (Spades,Ace),(Clubs,Queen),(Clubs,Num 2) ] ) = true;
+val test8_3 = all_same_color( [ (Hearts,Ace),(Diamonds,Queen) ] ) = true;
+val test8_4 = all_same_color( [ (Spades,Ace),(Diamonds,Queen) ] ) = false;
+val test8_5 = all_same_color( [ (Diamonds,Queen) ] ) = true;
+val test8_6 = all_same_color( [] ) = true;;
+
+(*9. sum_cards *)
+fun sum_cards( xs : card list ) =
+    let
+        fun aux( xs' : card list, acc : int ) =
+            case xs' of [] => acc
+            | a::[] => aux( [], get_value(a) + acc )
+            | a::b => aux( b, get_value(a) + acc )
+    in
+        aux( xs, 0 )
+    end;
+
+sum_cards( [ (Spades,Ace),(Diamonds,Queen),(Clubs,Num 2) ] );
+
 (*
 
 type mytype = { first:int, mid:int, last:int };
@@ -161,6 +244,6 @@ fun f( x: mytype ) =
 
 f( {first=1, mid=2, last=3} );
 
-(*results in val it = 2 : int*)
+(*reMsults in val it = 2 : int*)
 
 *)
