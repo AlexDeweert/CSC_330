@@ -259,7 +259,33 @@ val cards1 = [(Clubs, Ace), (Diamonds, Num 10), (Spades, Num 4), (Clubs, Num 4)]
 val test10_1 = score(cards1, 1) = 28 * 2;
 
 (*11. officiate*)
+fun officiate( cards : card list, moves : move list, goal : int ) =
+    let
+        fun run(  moves' : move list, cards' : card list, acc_hand : card list ) =
+            case moves' of [] => score(acc_hand, goal)
+            | one_move::[] => (*We have one move*)
+                (case one_move of Draw => (*The move type is draw*)
+                    (case cards' of [] => (*...but card list empty: game over*) score( acc_hand, goal )
+                    | b::[] => (*have at least one card in card list*) if sum_cards(acc_hand@[b]) > goal then score( acc_hand@[b], goal ) else run( [], [], acc_hand@[b] )
+                    | b::c::rest => (*have at least two cards in card list*) if sum_cards(acc_hand@[b]) > goal then score( acc_hand@[b], goal ) else run( [], c::rest, acc_hand@[b] ))
+                | Discard(c) => (*The move type is Discard*)
+                    (case acc_hand of [] => (*...but our hand is empty*) raise IllegalMove
+                    | b::[] => (*At least one card in hand*) run( [], cards', remove_card( acc_hand, c, IllegalMove )  )
+                    | b::d::rest => (*At least two cards in hand*) run( [], cards', remove_card( acc_hand, c, IllegalMove )  )))
+            | first_mv::next_mv::rest_mv => (*We have at least 2 moves*)
+                (case first_mv of Draw => (*The move type is draw*)
+                    (case cards' of [] => (*...but card list empty: game over*) score( acc_hand, goal )
+                    | b::[] => (*have at least one card in card list*) if sum_cards(acc_hand@[b]) > goal then score( acc_hand@[b], goal ) else run( next_mv::rest_mv, [], acc_hand@[b] )
+                    | b::c::rest => (*have at least two cards in card list*) if sum_cards(acc_hand@[b]) > goal then score( acc_hand@[b], goal ) else run( next_mv::rest_mv, c::rest, acc_hand@[b] ))
+                | Discard(c) => (*The move type is Discard*)
+                    (case acc_hand of [] => (*...but our hand is empty*) raise IllegalMove
+                    | b::[] => (*At least one card in hand*) run( next_mv::rest_mv, cards', remove_card( acc_hand, c, IllegalMove )  )
+                    | b::d::rest => (*At least two cards in hand*) run( next_mv::rest_mv, cards', remove_card( acc_hand, c, IllegalMove )  )))
+    in
+        run( moves, cards, [] )
+    end;
 
+(*val test11_3 = officiate(cards3, [Draw], 10) = 1;*)
 (*
 
 type mytype = { first:int, mid:int, last:int };
