@@ -122,13 +122,9 @@ val result = add 3; (*returns a partially evaluted function, 3 + y*)
 val resultresult = result 5; (* uses the results of fn(y) => 3+y, will result in 8*)*)
 
 (* 4. longest_string_helper *)
+(* Dont need to handle empty list case with foldl *)
 fun longest_string_helper f xs =
-    let
-        val aux = fn(x,acc) => if f( size(x),size(acc) ) then x else acc;
-    in
-        case xs of [] => ""
-        | a => List.foldl aux "" a
-    end;
+    List.foldl ( fn(x,acc) => if f(size(x),size(acc)) then x else acc ) "" xs;
 
 (* 4.1 longest_string3 *)
 val longest_string3 = longest_string_helper ( fn(a,b) => if a > b then true else false );
@@ -143,3 +139,39 @@ val test4_5 = longest_string4 ["aaaaa","bbb","ccccc"] = "ccccc";
 val test4_6 = longest_string4 ["aaa","bbbb","cc"] = "bbbb";
 val test4_7 = longest_string4 ["aaa","bbb","cccc"] = "cccc";
 val test4_8 = longest_string4 [] = "";
+
+(* 5. longest_capitalized *)
+fun longest_capitalized( xs : string list ) =
+    let
+        val composition = longest_string2 o only_capitals
+    in
+        composition xs
+    end;
+
+val test5_1 = longest_capitalized( ["This","Cannot","be", "true"] ) = "Cannot";
+
+(*6. rev_string *)
+fun rev_string( x : string ) =
+    let
+        val composition = String.implode o rev o String.explode
+    in
+        composition x
+    end;
+
+val test6_1 = rev_string( "reverse_me" ) = "em_esrever";
+val test6_2 = rev_string( "abba" ) = "abba";
+val test6_3 = rev_string( "" ) = "";
+
+(* 7. first_answer *)
+fun first_answer f xs =
+    let
+        val result = List.foldl ( fn(x,y) => case f(x) of v => v ) NONE xs
+    in
+        case result of SOME v => v | NONE => raise NoAnswer
+    end;
+        
+(* simpler_case4 testing: Interesting result. The type of the acc in foldl will dictate what
+type of value that the function parameter f will return. We know that xs is a list because
+foldl only works on lists *)
+fun sc4 f xs =
+    List.foldl ( fn(x,y) => case f(x) of v => v ) "" xs
