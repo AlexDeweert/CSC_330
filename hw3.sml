@@ -163,15 +163,23 @@ val test6_2 = rev_string( "abba" ) = "abba";
 val test6_3 = rev_string( "" ) = "";
 
 (* 7. first_answer *)
-fun first_answer f xs =
-    let
-        val result = List.foldl ( fn(x,y) => case f(x) of v => v ) NONE xs
-    in
-        case result of SOME v => v | NONE => raise NoAnswer
-    end;
-        
-(* simpler_case4 testing: Interesting result. The type of the acc in foldl will dictate what
-type of value that the function parameter f will return. We know that xs is a list because
+(* The type of the acc (the init val) in foldl will dictate what type of value 
+that the function parameter f will return. We know that xs is a list because
 foldl only works on lists *)
-fun sc4 f xs =
-    List.foldl ( fn(x,y) => case f(x) of v => v ) "" xs
+fun first_answer f xs =
+    case xs of [] => raise NoAnswer
+    | [x] => ( case f(x) of (SOME v) => v | NONE => first_answer f [] )
+    | x::rest => ( case f(x) of (SOME v) => v | NONE => first_answer f rest )
+
+(* 8. all_answers *)
+fun all_answers f xs =
+    let
+        fun aux( xs', acc ) =
+            case xs' of [] => SOME acc
+            | x::[] => aux( [], acc@( ( first_answer f [x] ) ) )
+            | x::rest => aux( rest, acc@( (first_answer f [x] )  ) )
+    in
+        aux( xs, [] )
+    end
+    handle NoAnswer => NONE;
+
