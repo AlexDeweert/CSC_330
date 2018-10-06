@@ -29,9 +29,9 @@ datatype valu = Const of int
     The function parameter f2 allows an optional count (depending on the specified behavior of the 
     function passed into g for f2) for any Variable patterns should a variable appear in the pattern p.
     The difference between f1 and f2 is that f2 can determine if the x in Variable meets some criteria
-    before a count value is returned by f2.
+    in p before a count value is returned by f2, f1 simply optionally counts Wildcard patterns in p.
 
-    g computes an option Wildcard count, plus a an optional, customized, Variable count.
+    g computes an optional Wildcard count plus an optional, customized, Variable count.
 *)
 
 fun g f1 f2 p =
