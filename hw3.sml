@@ -19,21 +19,71 @@ datatype valu = Const of int
 	      | Tuple of valu list
 	      | Constructor of string * valu
 
+
+fun g f1 f2 p =
+    let
+	    val r = g f1 f2
+    in
+	    case p of
+	        Wildcard          => f1 ()
+	      | Variable x        => f2 x
+	      | TupleP ps         => List.foldl (fn (p,i) => (r p) + i) 0 ps
+	      | ConstructorP(_,p) => r p
+	      | _                 => 0
+    end
+
+(* 9_b. count_wildcards *)
+fun count_wildcards p =
+    g ( fn() => 1 ) ( fn(x) => 0 ) p;
+
+val test9_b_1 = count_wildcards(Wildcard) = 1;
+val test9_b_2 = count_wildcards(UnitP) = 0;
+val test9_b_3 = count_wildcards(ConstP 1) = 0;
+val test9_b_4 = count_wildcards(TupleP []) = 0;
+val test9_b_5 = count_wildcards(TupleP [Wildcard]) = 1;
+val test9_b_6 = count_wildcards(TupleP [Wildcard, UnitP, Variable "x"]) = 1;
+val test9_b_7 = count_wildcards(TupleP [Wildcard, Wildcard, Variable "xy"]) = 2;
+val test9_b_8 = count_wildcards(TupleP [ TupleP [Wildcard, Wildcard]]) = 2;
+val test9_b_9 = count_wildcards(TupleP [ ConstructorP("a", Wildcard), TupleP[Wildcard]]) = 2;
+
+(* 9_c. count_wild_and_variable_lengths *)
+fun count_wild_and_variable_lengths p =
+    g ( fn() => 1 ) ( fn(x) => String.size(x) ) p;
+
+val test9_c_1 = count_wild_and_variable_lengths(Wildcard) = 1;
+val test9_c_2 = count_wild_and_variable_lengths(Wildcard) = 1;
+val test9_c_3 = count_wild_and_variable_lengths(UnitP) = 0;
+val test9_c_4 = count_wild_and_variable_lengths(ConstP 1) = 0;
+val test9_c_5 = count_wild_and_variable_lengths(TupleP []) =  0;
+val test9_c_6 = count_wild_and_variable_lengths(TupleP [Wildcard]) = 1;
+val test9_c_7 = count_wild_and_variable_lengths(TupleP [Wildcard, UnitP, Variable "abc"]) = 4;
+val test9_c_8 = count_wild_and_variable_lengths(TupleP [Wildcard, Wildcard, Variable "xy"]) = 4;
+val test9_c_9 = count_wild_and_variable_lengths(TupleP [TupleP [Wildcard, Wildcard, Variable "This is the sea"]]) = 17;
+
+(*
+
 (* Description of g:
 
+    g appears to be a general purpose helper function that:
+    
+    -In the case of "count_wildcards" allows one to count the number of wildcards and return an integer count
+    in either a single Wildcard, nested within a Tuple, or nested within a constructor; or
+
+    -To perform some check of a variable x (the check depends on a function specified) and return some
+    integer value based on the results of that check.
 *)
 
-(*fun g f1 f2 p =
+fun g f1 f2 p =
     let
-	val r = g f1 f2
+	    val r = g f1 f2
     in
-	case p of
-	    Wildcard          => f1 ()
-	  | Variable x        => f2 x
-	  | TupleP ps         => List.foldl (fn (p,i) => (r p) + i) 0 ps
-	  | ConstructorP(_,p) => r p
-	  | _                 => 0
-    end*)
+	    case p of
+	        Wildcard          => f1 ()
+	      | Variable x        => f2 x
+	      | TupleP ps         => List.foldl (fn (p,i) => (r p) + i) 0 ps
+	      | ConstructorP(_,p) => r p
+	      | _                 => 0
+    end
 
 
 (**** put all your code after this line ****)
@@ -151,12 +201,7 @@ fun longest_capitalized( xs : string list ) =
 val test5_1 = longest_capitalized( ["This","Cannot","be", "true"] ) = "Cannot";
 
 (*6. rev_string *)
-fun rev_string( x : string ) =
-    let
-        val composition = String.implode o rev o String.explode
-    in
-        composition x
-    end;
+val rev_string = String.implode o rev o String.explode;
 
 val test6_1 = rev_string( "reverse_me" ) = "em_esrever";
 val test6_2 = rev_string( "abba" ) = "abba";
@@ -183,3 +228,6 @@ fun all_answers f xs =
     end
     handle NoAnswer => NONE;
 
+(* 9.  *)
+
+*)
