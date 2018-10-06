@@ -19,58 +19,19 @@ datatype valu = Const of int
 	      | Tuple of valu list
 	      | Constructor of string * valu
 
-
-fun g f1 f2 p =
-    let
-	    val r = g f1 f2
-    in
-	    case p of
-	        Wildcard          => f1 ()
-	      | Variable x        => f2 x
-	      | TupleP ps         => List.foldl (fn (p,i) => (r p) + i) 0 ps
-	      | ConstructorP(_,p) => r p
-	      | _                 => 0
-    end
-
-(* 9_b. count_wildcards *)
-fun count_wildcards p =
-    g ( fn() => 1 ) ( fn(x) => 0 ) p;
-
-val test9_b_1 = count_wildcards(Wildcard) = 1;
-val test9_b_2 = count_wildcards(UnitP) = 0;
-val test9_b_3 = count_wildcards(ConstP 1) = 0;
-val test9_b_4 = count_wildcards(TupleP []) = 0;
-val test9_b_5 = count_wildcards(TupleP [Wildcard]) = 1;
-val test9_b_6 = count_wildcards(TupleP [Wildcard, UnitP, Variable "x"]) = 1;
-val test9_b_7 = count_wildcards(TupleP [Wildcard, Wildcard, Variable "xy"]) = 2;
-val test9_b_8 = count_wildcards(TupleP [ TupleP [Wildcard, Wildcard]]) = 2;
-val test9_b_9 = count_wildcards(TupleP [ ConstructorP("a", Wildcard), TupleP[Wildcard]]) = 2;
-
-(* 9_c. count_wild_and_variable_lengths *)
-fun count_wild_and_variable_lengths p =
-    g ( fn() => 1 ) ( fn(x) => String.size(x) ) p;
-
-val test9_c_1 = count_wild_and_variable_lengths(Wildcard) = 1;
-val test9_c_2 = count_wild_and_variable_lengths(Wildcard) = 1;
-val test9_c_3 = count_wild_and_variable_lengths(UnitP) = 0;
-val test9_c_4 = count_wild_and_variable_lengths(ConstP 1) = 0;
-val test9_c_5 = count_wild_and_variable_lengths(TupleP []) =  0;
-val test9_c_6 = count_wild_and_variable_lengths(TupleP [Wildcard]) = 1;
-val test9_c_7 = count_wild_and_variable_lengths(TupleP [Wildcard, UnitP, Variable "abc"]) = 4;
-val test9_c_8 = count_wild_and_variable_lengths(TupleP [Wildcard, Wildcard, Variable "xy"]) = 4;
-val test9_c_9 = count_wild_and_variable_lengths(TupleP [TupleP [Wildcard, Wildcard, Variable "This is the sea"]]) = 17;
-
-(*
-
 (* Description of g:
 
-    g appears to be a general purpose helper function that:
-    
-    -In the case of "count_wildcards" allows one to count the number of wildcards and return an integer count
-    in either a single Wildcard, nested within a Tuple, or nested within a constructor; or
+    g takes three arguments, two functions (f1 and f2) and a pattern datatype (p).
 
-    -To perform some check of a variable x (the check depends on a function specified) and return some
-    integer value based on the results of that check.
+    The function parameter f1 allows an optional count (depending on the behavior of the 
+    function passed into g for f1) for any Wildcard patterns should a Wildcard appear in the pattern p.
+
+    The function parameter f2 allows an optional count (depending on the specified behavior of the 
+    function passed into g for f2) for any Variable patterns should a variable appear in the pattern p.
+    The difference between f1 and f2 is that f2 can determine if the x in Variable meets some criteria
+    before a count value is returned by f2.
+
+    g computes an option Wildcard count, plus a an optional, customized, Variable count.
 *)
 
 fun g f1 f2 p =
@@ -84,15 +45,6 @@ fun g f1 f2 p =
 	      | ConstructorP(_,p) => r p
 	      | _                 => 0
     end
-
-
-(**** put all your code after this line ****)
-
-(* In this assignment:
-*  Higher order functions
-*  Filter, map, foldl
-*  Currying
-*)
 
 (* 1. only_capitals *)
 fun only_capitals( xs : string list ) =
@@ -228,6 +180,38 @@ fun all_answers f xs =
     end
     handle NoAnswer => NONE;
 
-(* 9.  *)
+(* 9_b. count_wildcards *)
+fun count_wildcards p =
+    g ( fn() => 1 ) ( fn(x) => 0 ) p;
 
-*)
+val test9_b_1 = count_wildcards(Wildcard) = 1;
+val test9_b_2 = count_wildcards(UnitP) = 0;
+val test9_b_3 = count_wildcards(ConstP 1) = 0;
+val test9_b_4 = count_wildcards(TupleP []) = 0;
+val test9_b_5 = count_wildcards(TupleP [Wildcard]) = 1;
+val test9_b_6 = count_wildcards(TupleP [Wildcard, UnitP, Variable "x"]) = 1;
+val test9_b_7 = count_wildcards(TupleP [Wildcard, Wildcard, Variable "xy"]) = 2;
+val test9_b_8 = count_wildcards(TupleP [ TupleP [Wildcard, Wildcard]]) = 2;
+val test9_b_9 = count_wildcards(TupleP [ ConstructorP("a", Wildcard), TupleP[Wildcard]]) = 2;
+
+(* 9_c. count_wild_and_variable_lengths *)
+fun count_wild_and_variable_lengths p =
+    g ( fn() => 1 ) ( fn(x) => String.size(x) ) p;
+
+val test9_c_1 = count_wild_and_variable_lengths(Wildcard) = 1;
+val test9_c_2 = count_wild_and_variable_lengths(Wildcard) = 1;
+val test9_c_3 = count_wild_and_variable_lengths(UnitP) = 0;
+val test9_c_4 = count_wild_and_variable_lengths(ConstP 1) = 0;
+val test9_c_5 = count_wild_and_variable_lengths(TupleP []) =  0;
+val test9_c_6 = count_wild_and_variable_lengths(TupleP [Wildcard]) = 1;
+val test9_c_7 = count_wild_and_variable_lengths(TupleP [Wildcard, UnitP, Variable "abc"]) = 4;
+val test9_c_8 = count_wild_and_variable_lengths(TupleP [Wildcard, Wildcard, Variable "xy"]) = 4;
+val test9_c_9 = count_wild_and_variable_lengths(TupleP [TupleP [Wildcard, Wildcard, Variable "This is the sea"]]) = 17;
+
+(* 9_d. count_some_pair *)
+fun count_some_var(str, p) =
+    g ( fn() => 0 ) ( fn(x) => if x = str then 1 else 0 ) p;
+
+val test9_d_1 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP, Variable "test",Variable "test"]]) = 2;
+val test9_d_2 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP,Variable "te"]]) = 0;
+val test9_d_3 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP, Variable "test"]]) = 1;
