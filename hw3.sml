@@ -7,6 +7,11 @@
 
 exception NoAnswer
 
+datatype valu = Const of int
+	      | Unit
+	      | Tuple of valu list
+	      | Constructor of string * valu
+
 datatype pattern = Wildcard
 		 | Variable of string
 		 | UnitP
@@ -14,11 +19,60 @@ datatype pattern = Wildcard
 		 | TupleP of pattern list
 		 | ConstructorP of string * pattern
 
-datatype valu = Const of int
-	      | Unit
-	      | Tuple of valu list
-	      | Constructor of string * valu
+(* 7. first_answer *)
+(* The type of the acc (the init val) in foldl will dictate what type of value 
+that the function parameter f will return. We know that xs is a list because
+foldl only works on lists *)
+fun first_answer f xs =
+    case xs of [] => raise NoAnswer
+    | [x] => ( case f(x) of (SOME v) => v | NONE => first_answer f [] )
+    | x::rest => ( case f(x) of (SOME v) => v | NONE => first_answer f rest )
 
+(* 8. all_answers *)
+fun all_answers f xs =
+    let
+        fun aux( xs', acc ) =
+            case xs' of [] => SOME acc
+            | x::[] => aux( [], acc@( ( first_answer f [x] ) ) )
+            | x::rest => aux( rest, acc@( (first_answer f [x] )  ) )
+    in
+        aux( xs, [] )
+    end
+    handle NoAnswer => NONE;
+
+(* 11. match *)
+(* valu*pattern *)
+fun match vp =
+        case vp of (Tuple tuple_v_lst, TupleP tuple_p_lst) => if ( (length(tuple_v_lst)) = (length(tuple_p_lst)) ) then
+                                                            (let
+                                                                val result = (ListPair.zip(tuple_v_lst,tuple_p_lst))
+                                                            in
+                                                                SOME []
+                                                                (*(all_answers match result)*)
+                                                            end)
+                                                        else NONE
+        | (Unit, Variable v) => SOME [ (v, Unit) ]
+        | (Unit, ConstP i) => NONE
+        | (Const i, Wildcard) => SOME []
+        | (Constructor(ctor_val_string,v), ConstructorP(ctor_pat_string,p)) => if ctor_val_string = ctor_pat_string then match(v,p) else NONE
+        | (Constructor(ctors,v), Wildcard) => SOME []
+        | (Unit,UnitP) => SOME []
+        | (Unit, Wildcard) => SOME [];
+
+val test11_9 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", Variable "dog"]) = SOME [];
+
+(*val test11_1 = match (Unit, UnitP) = SOME [];
+val test11_2 = match (Unit, Variable "cat") = SOME [("cat", Unit)];
+val test11_3 = match (Unit, ConstP 3) = NONE;
+val test11_4 = match (Unit, Wildcard) = SOME [];
+val test11_5 = match(Constructor ("mat", Unit), ConstructorP ("hat", Variable "cat")) = NONE;
+val test11_6 = match(Constructor ("dog", Unit), ConstructorP ("dog", Variable "cat")) = SOME [("cat", Unit)];
+val test11_7 = match(Constructor ("dog", Unit), Wildcard) = SOME [];
+val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];
+val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];*)
+(*val test11_4 = match ( Tuple [Unit], TupleP [] ) = NONE;*)
+
+(*
 (* Description of g:
 
     g takes three arguments, two functions (f1 and f2) and a pattern datatype (p).
@@ -28,7 +82,7 @@ datatype valu = Const of int
 
     The function parameter f2 allows an optional count (depending on the specified behavior of the 
     function passed into g for f2) for any Variable patterns should a variable appear in the pattern p.
-    The difference between f1 and f2 is that f2 can determine if the x in Variable meets some criteria
+    The difference between f1 and f2 is that f2 can determine if the string in Variable meets some criteria
     in p before a count value is returned by f2, f1 simply optionally counts Wildcard patterns in p.
 
     g computes an optional Wildcard count plus an optional, customized, Variable count.
@@ -159,26 +213,6 @@ val test6_1 = rev_string( "reverse_me" ) = "em_esrever";
 val test6_2 = rev_string( "abba" ) = "abba";
 val test6_3 = rev_string( "" ) = "";
 
-(* 7. first_answer *)
-(* The type of the acc (the init val) in foldl will dictate what type of value 
-that the function parameter f will return. We know that xs is a list because
-foldl only works on lists *)
-fun first_answer f xs =
-    case xs of [] => raise NoAnswer
-    | [x] => ( case f(x) of (SOME v) => v | NONE => first_answer f [] )
-    | x::rest => ( case f(x) of (SOME v) => v | NONE => first_answer f rest )
-
-(* 8. all_answers *)
-fun all_answers f xs =
-    let
-        fun aux( xs', acc ) =
-            case xs' of [] => SOME acc
-            | x::[] => aux( [], acc@( ( first_answer f [x] ) ) )
-            | x::rest => aux( rest, acc@( (first_answer f [x] )  ) )
-    in
-        aux( xs, [] )
-    end
-    handle NoAnswer => NONE;
 
 (* 9_b. count_wildcards *)
 fun count_wildcards p =
@@ -215,3 +249,29 @@ fun count_some_var(str, p) =
 val test9_d_1 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP, Variable "test",Variable "test"]]) = 2;
 val test9_d_2 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP,Variable "te"]]) = 0;
 val test9_d_3 = count_some_var("test", TupleP [TupleP [Wildcard, UnitP, Variable "test"]]) = 1;
+
+(* 10. check_pat *)
+fun check_pat pat =
+    let
+        fun get_strings p =
+            case p of UnitP => []
+            | ConstP x => []
+            | Wildcard => []
+            | Variable x => [x]
+            | TupleP ps => List.foldl ( fn(p',acc) => (get_strings p')@acc ) [] ps
+            | ConstructorP(_,p') => (get_strings p')
+        fun check_duplicates(xs:string list, acc:bool) =
+            case xs of [] => true
+            | x::[] => true
+            | x::xs' => if acc then false else (check_duplicates( xs', (List.exists (fn(y) => x=y) xs') ))
+    in
+        check_duplicates( (get_strings pat), false )
+    end;
+
+val test10_1 = check_pat(TupleP [Wildcard,Variable "cat",Variable "pp",TupleP[Variable "tt"],Wildcard,ConstP 3,ConstructorP("cony",Variable "pp")]) = false;
+val test10_2 = check_pat (TupleP [Variable "cat",ConstructorP("cat",Wildcard)]) = true;
+val test10_3 = check_pat (TupleP [Wildcard,Variable "cat",Variable "pp",TupleP[Variable "tt"],Wildcard,ConstP 3,ConstructorP("tt",Variable "pq")]) = true;
+val test10_4 = check_pat (TupleP [Wildcard,Variable "cat",Variable "pp",TupleP[Variable "tt"],Wildcard,ConstP 3,ConstructorP("cony",Variable "test")]) = true;
+
+(* 11.  *)
+*)
