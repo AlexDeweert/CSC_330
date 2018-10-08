@@ -19,22 +19,6 @@ datatype pattern = Wildcard
 		 | TupleP of pattern list
 		 | ConstructorP of string * pattern
 
-
-(*
-val test11_1 = match (Unit, UnitP) = SOME [];
-val test11_2 = match (Unit, Variable "cat") = SOME [("cat", Unit)];
-val test11_3 = match (Unit, ConstP 3) = NONE;
-val test11_4 = match (Unit, Wildcard) = SOME [];
-val test11_5 = match(Constructor ("mat", Unit), ConstructorP ("hat", Variable "cat")) = NONE;
-val test11_6 = match(Constructor ("dog", Unit), ConstructorP ("dog", Variable "cat")) = SOME [("cat", Unit)];
-val test11_7 = match(Constructor ("dog", Unit), Wildcard) = SOME [];
-val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];
-val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];
-val test11_9 = match(Tuple [Unit], TupleP [Variable "cat"]);
-val test11_10 = match(Tuple [], TupleP [Wildcard]);
-val test11_11 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", ConstP 3]);
-*)
-
 (* Description of g:
 
     g takes three arguments, two functions (f1 and f2) and a pattern datatype (p).
@@ -68,15 +52,6 @@ fun only_capitals( xs : string list ) =
 
 val test1_1 = only_capitals( [ "These", "Have", "Capitals", "this", "doesnt" ] ) = [ "These","Have","Capitals" ];
 val test1_2 = only_capitals( [] ) = [];
-
-(* Foldl takes one parameter, an anon function. 
-   The anon function takes two parameters,
-   a single element (same type as a list element)
-   and an (inititally empty) accumulator of the same
-   type as one of the list elements.
-   Foldl will perform the function on each element in
-   the list, and it will return the accumulated value.
-*)
 
 (* 2. longest_string1 *)
 fun longest_string1( xs : string list ) =
@@ -130,15 +105,6 @@ fun longest_string4( xs : string list ) =
         | a => List.foldl aux "" a
     end;
 
-(* SIMPLE working example1*)
-(*fun curry f = fn x => f(x);
-val foo = fn(z) => if z > 5 then true else false;
-val foo2 = fn(z) => if z <= 5 then true else false;*)
-(* Simple working example2 *)
-(*fun add x y = x + y;
-val result = add 3; (*returns a partially evaluted function, 3 + y*)
-val resultresult = result 5; (* uses the results of fn(y) => 3+y, will result in 8*)*)
-
 (* 4. longest_string_helper *)
 (* Dont need to handle empty list case with foldl *)
 fun longest_string_helper f xs =
@@ -161,12 +127,14 @@ val test4_8 = longest_string4 [] = "";
 (* 5. longest_capitalized *)
 fun longest_capitalized( xs : string list ) =
     let
-        val composition = longest_string2 o only_capitals
+        val composition = longest_string1 o only_capitals
     in
         composition xs
     end;
 
 val test5_1 = longest_capitalized( ["This","Cannot","be", "true"] ) = "Cannot";
+val words = ["This","the","A","Hello","World","not","long string","loooong string"];
+val test5_2 = longest_capitalized words;
 
 (*6. rev_string *)
 val rev_string = String.implode o rev o String.explode;
@@ -285,3 +253,9 @@ val test11_8 = match(Tuple[Const 7], TupleP[ConstP 7]) =  SOME [];
 val test11_9 = match(Constructor("Cat", Const 7), ConstructorP("Cat", Wildcard)) = SOME[];
 val test11_10 = match(Constructor("Cat", Const 7), ConstructorP("Cat", Variable "dog"))  =  SOME [("dog",Const 7)];
 val test11_11 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", ConstP 3]) = NONE;
+
+(* 12. first_match *)
+fun first_match value pattern_list =
+    (* first_answer takes a function and list of xs *)
+    SOME( first_answer ( fn x => match(value,x) ) pattern_list )
+    handle NoAnswer => NONE;
