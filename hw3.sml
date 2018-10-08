@@ -43,24 +43,30 @@ fun all_answers f xs =
 (* 11. match *)
 (* valu*pattern *)
 fun match vp =
-        case vp of (Tuple tuple_v_lst, TupleP tuple_p_lst) => if ( (length(tuple_v_lst)) = (length(tuple_p_lst)) ) then
-                                                            (let
-                                                                val result = (ListPair.zip(tuple_v_lst,tuple_p_lst))
-                                                            in
-                                                                SOME []
-                                                                (*(all_answers match result)*)
-                                                            end)
-                                                        else NONE
-        | (Unit, Variable v) => SOME [ (v, Unit) ]
+        case vp of (Unit, Variable v) => SOME [ (v, Unit) ]
         | (Unit, ConstP i) => NONE
         | (Const i, Wildcard) => SOME []
-        | (Constructor(ctor_val_string,v), ConstructorP(ctor_pat_string,p)) => if ctor_val_string = ctor_pat_string then match(v,p) else NONE
-        | (Constructor(ctors,v), Wildcard) => SOME []
         | (Unit,UnitP) => SOME []
-        | (Unit, Wildcard) => SOME [];
+        | (Unit, Wildcard) => SOME []
+        | (Tuple tuple_v_lst, TupleP tuple_p_lst) => 
+            if ( length(tuple_v_lst) = length(tuple_p_lst) ) then (
+                let val result = (ListPair.zip(tuple_v_lst,tuple_p_lst))
+                    fun unwrap(vp') =
+                        case vp' of (SOME y) => y | NONE => []
+                    fun aux(xs, acc) =
+                        case xs of [] => acc
+                        | x::[] => acc@aux( [], unwrap( (match x) ) )
+                        | x::xs' => acc@aux( xs', unwrap( (match x) ) )
+                in
+                    (*match (hd result)*)
+                    SOME (aux( result, [] ))
+                end
+            ) else SOME []
+        | (Constructor(ctor_val_string,v), ConstructorP(ctor_pat_string,p)) => if ctor_val_string = ctor_pat_string then match(v,p) else NONE
+        | (Constructor(ctors,v), Wildcard) => SOME [];
 
-val test11_9 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", Variable "dog"]) = SOME [];
-
+val test11_9 = match(Tuple [Unit], TupleP [Variable "cat"]) = SOME [("cat", Unit)];
+val test11_10 = match(Tuple [], TupleP [Wildcard]);
 (*val test11_1 = match (Unit, UnitP) = SOME [];
 val test11_2 = match (Unit, Variable "cat") = SOME [("cat", Unit)];
 val test11_3 = match (Unit, ConstP 3) = NONE;
