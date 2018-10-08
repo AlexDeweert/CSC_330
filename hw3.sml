@@ -19,50 +19,7 @@ datatype pattern = Wildcard
 		 | TupleP of pattern list
 		 | ConstructorP of string * pattern
 
-(* 7. first_answer *)
-(* The type of the acc (the init val) in foldl will dictate what type of value 
-that the function parameter f will return. We know that xs is a list because
-foldl only works on lists *)
-fun first_answer f xs =
-    case xs of [] => raise NoAnswer
-    | [x] => ( case f(x) of (SOME v) => v | NONE => first_answer f [] )
-    | x::rest => ( case f(x) of (SOME v) => v | NONE => first_answer f rest )
 
-(* 8. all_answers *)
-fun all_answers f xs =
-    let
-        fun aux( xs', acc ) =
-            case xs' of [] => SOME acc
-            | x::[] => aux( [], acc@( ( first_answer f [x] ) ) )
-            | x::rest => aux( rest, acc@( (first_answer f [x] )  ) )
-    in
-        aux( xs, [] )
-    end
-    handle NoAnswer => NONE;
-
-(* 11. match *)
-fun match val_pat_pair =
-    let
-        fun get_binding(pair) =
-            case pair of (v,Wildcard) => []
-            | (v,Variable s) => [(s,v)]
-            | (Unit, UnitP) => []
-            | (Const i, ConstP j) => if i = j then [] else raise NoAnswer
-            | (Tuple v, TupleP p) => if length(v) = length(p) then aux( (ListPair.zip(v,p)),[] ) else raise NoAnswer
-            | (_,_) => raise NoAnswer
-        and aux( xs, acc ) =
-            case xs of [] => acc
-            | x::[] => aux([], acc@get_binding(x) )
-            | x::xs' => aux(xs', acc@get_binding(x) )
-    in
-        let val binding = get_binding(val_pat_pair) in SOME binding end handle NoAnswer => NONE
-    end;
-
-val test11_1 = match(Tuple [Unit], Variable "cat") = SOME [("cat", Tuple [Unit])];
-val test11_2 = match(Unit, UnitP) = SOME [];
-val test11_3 = match(Const 17, ConstP 17) = SOME [];
-val test11_4 = match(Unit, ConstP 3) = NONE;
-val test11_5 = match(Tuple [Unit], TupleP [Variable "cat"]) = SOME [("cat", Unit)];
 (*
 val test11_1 = match (Unit, UnitP) = SOME [];
 val test11_2 = match (Unit, Variable "cat") = SOME [("cat", Unit)];
@@ -78,7 +35,6 @@ val test11_10 = match(Tuple [], TupleP [Wildcard]);
 val test11_11 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", ConstP 3]);
 *)
 
-(*
 (* Description of g:
 
     g takes three arguments, two functions (f1 and f2) and a pattern datatype (p).
@@ -219,6 +175,26 @@ val test6_1 = rev_string( "reverse_me" ) = "em_esrever";
 val test6_2 = rev_string( "abba" ) = "abba";
 val test6_3 = rev_string( "" ) = "";
 
+(* 7. first_answer *)
+(* The type of the acc (the init val) in foldl will dictate what type of value 
+that the function parameter f will return. We know that xs is a list because
+foldl only works on lists *)
+fun first_answer f xs =
+    case xs of [] => raise NoAnswer
+    | [x] => ( case f(x) of (SOME v) => v | NONE => first_answer f [] )
+    | x::rest => ( case f(x) of (SOME v) => v | NONE => first_answer f rest )
+
+(* 8. all_answers *)
+fun all_answers f xs =
+    let
+        fun aux( xs', acc ) =
+            case xs' of [] => SOME acc
+            | x::[] => aux( [], acc@( ( first_answer f [x] ) ) )
+            | x::rest => aux( rest, acc@( (first_answer f [x] )  ) )
+    in
+        aux( xs, [] )
+    end
+    handle NoAnswer => NONE;
 
 (* 9_b. count_wildcards *)
 fun count_wildcards p =
@@ -279,5 +255,33 @@ val test10_2 = check_pat (TupleP [Variable "cat",ConstructorP("cat",Wildcard)]) 
 val test10_3 = check_pat (TupleP [Wildcard,Variable "cat",Variable "pp",TupleP[Variable "tt"],Wildcard,ConstP 3,ConstructorP("tt",Variable "pq")]) = true;
 val test10_4 = check_pat (TupleP [Wildcard,Variable "cat",Variable "pp",TupleP[Variable "tt"],Wildcard,ConstP 3,ConstructorP("cony",Variable "test")]) = true;
 
-(* 11.  *)
-*)
+(* 11. match *)
+fun match val_pat_pair =
+    let
+        fun get_binding(pair) =
+            case pair of (v,Wildcard) => []
+            | (v,Variable s) => [(s,v)]
+            | (Unit, UnitP) => []
+            | (Const i, ConstP j) => if i = j then [] else raise NoAnswer
+            | (Tuple v, TupleP p) => if length(v) = length(p) then aux( (ListPair.zip(v,p)),[] ) else raise NoAnswer
+            | (Constructor(ctor_val_str, v), ConstructorP(ctor_pat_str,p)) => if ctor_val_str = ctor_pat_str then get_binding((v,p)) else raise NoAnswer
+            | (_,_) => raise NoAnswer
+        and aux( xs, acc ) =
+            case xs of [] => acc
+            | x::[] => ( aux([], acc@get_binding(x) ))(* handle NoAnswer => aux( [], acc ))*)
+            | x::xs' => ( aux(xs', acc@get_binding(x) ))(* handle NoAnswer => aux( xs', acc ))*)
+    in
+        let val binding = get_binding(val_pat_pair) in SOME binding end handle NoAnswer => NONE
+    end;
+
+val test11_1 = match(Tuple [Unit], Variable "cat") = SOME [("cat", Tuple [Unit])];
+val test11_2 = match(Unit, UnitP) = SOME [];
+val test11_3 = match(Const 17, ConstP 17) = SOME [];
+val test11_4 = match(Unit, ConstP 3) = NONE;
+val test11_5 = match(Tuple [Unit], TupleP [Variable "cat"]) = SOME [("cat", Unit)];
+val test11_6 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", Variable "dog"]) = SOME [("cat", Unit),("dog", Const 8)];
+val test11_7 = match(Tuple [Unit, Tuple [Unit, Unit]],TupleP [Variable "cat", TupleP [Variable "dog", Variable "rat"]]) = SOME [("cat", Unit), ("dog", Unit),  ("rat", Unit)];
+val test11_8 = match(Tuple[Const 7], TupleP[ConstP 7]) =  SOME [];
+val test11_9 = match(Constructor("Cat", Const 7), ConstructorP("Cat", Wildcard)) = SOME[];
+val test11_10 = match(Constructor("Cat", Const 7), ConstructorP("Cat", Variable "dog"))  =  SOME [("dog",Const 7)];
+val test11_11 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", ConstP 3]) = NONE;
