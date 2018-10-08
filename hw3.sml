@@ -41,33 +41,30 @@ fun all_answers f xs =
     handle NoAnswer => NONE;
 
 (* 11. match *)
-(* valu*pattern *)
-fun match vp =
-        case vp of (Unit, Variable v) => SOME [ (v, Unit) ]
-        | (Unit, ConstP i) => NONE
-        | (Const i, Wildcard) => SOME []
-        | (Unit,UnitP) => SOME []
-        | (Unit, Wildcard) => SOME []
-        | (Tuple tuple_v_lst, TupleP tuple_p_lst) => 
-            if ( length(tuple_v_lst) = length(tuple_p_lst) ) then (
-                let val result = (ListPair.zip(tuple_v_lst,tuple_p_lst))
-                    fun unwrap(vp') =
-                        case vp' of (SOME y) => y | NONE => []
-                    fun aux(xs, acc) =
-                        case xs of [] => acc
-                        | x::[] => acc@aux( [], unwrap( (match x) ) )
-                        | x::xs' => acc@aux( xs', unwrap( (match x) ) )
-                in
-                    (*match (hd result)*)
-                    SOME (aux( result, [] ))
-                end
-            ) else SOME []
-        | (Constructor(ctor_val_string,v), ConstructorP(ctor_pat_string,p)) => if ctor_val_string = ctor_pat_string then match(v,p) else NONE
-        | (Constructor(ctors,v), Wildcard) => SOME [];
+fun match val_pat_pair =
+    let
+        fun get_binding(pair) =
+            case pair of (v,Wildcard) => []
+            | (v,Variable s) => [(s,v)]
+            | (Unit, UnitP) => []
+            | (Const i, ConstP j) => if i = j then [] else raise NoAnswer
+            | (Tuple v, TupleP p) => if length(v) = length(p) then aux( (ListPair.zip(v,p)),[] ) else raise NoAnswer
+            | (_,_) => raise NoAnswer
+        and aux( xs, acc ) =
+            case xs of [] => acc
+            | x::[] => aux([], acc@get_binding(x) )
+            | x::xs' => aux(xs', acc@get_binding(x) )
+    in
+        let val binding = get_binding(val_pat_pair) in SOME binding end handle NoAnswer => NONE
+    end;
 
-val test11_9 = match(Tuple [Unit], TupleP [Variable "cat"]) = SOME [("cat", Unit)];
-val test11_10 = match(Tuple [], TupleP [Wildcard]);
-(*val test11_1 = match (Unit, UnitP) = SOME [];
+val test11_1 = match(Tuple [Unit], Variable "cat") = SOME [("cat", Tuple [Unit])];
+val test11_2 = match(Unit, UnitP) = SOME [];
+val test11_3 = match(Const 17, ConstP 17) = SOME [];
+val test11_4 = match(Unit, ConstP 3) = NONE;
+val test11_5 = match(Tuple [Unit], TupleP [Variable "cat"]) = SOME [("cat", Unit)];
+(*
+val test11_1 = match (Unit, UnitP) = SOME [];
 val test11_2 = match (Unit, Variable "cat") = SOME [("cat", Unit)];
 val test11_3 = match (Unit, ConstP 3) = NONE;
 val test11_4 = match (Unit, Wildcard) = SOME [];
@@ -75,8 +72,11 @@ val test11_5 = match(Constructor ("mat", Unit), ConstructorP ("hat", Variable "c
 val test11_6 = match(Constructor ("dog", Unit), ConstructorP ("dog", Variable "cat")) = SOME [("cat", Unit)];
 val test11_7 = match(Constructor ("dog", Unit), Wildcard) = SOME [];
 val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];
-val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];*)
-(*val test11_4 = match ( Tuple [Unit], TupleP [] ) = NONE;*)
+val test11_8 = match(Constructor ("dog", Const 7), Wildcard) = SOME [];
+val test11_9 = match(Tuple [Unit], TupleP [Variable "cat"]);
+val test11_10 = match(Tuple [], TupleP [Wildcard]);
+val test11_11 = match(Tuple [Unit, Const 8], TupleP [Variable "cat", ConstP 3]);
+*)
 
 (*
 (* Description of g:
