@@ -63,26 +63,36 @@
   )
 )
 
-; try to merge two streams (zip per Ben)
-; 7) stream-add-zero
-;(define (stream-add-zero s)
-;)
-
 ;stream with zeros
 (define zeros ( lambda() (cons 0 zeros) ))
 
-;want to return a pair of pairs ( (car1 . car2) . ( procedure1 . procedure2 ) )
-;want  pair of the stream cars
-;want a pair of the stream cdrs
-
 ;A STREAM IS A THUNK that when called produces a pair of (1) the first element in the sequence and (2) a THUNK that represents the stream for the second-infty elements
-;(define (stream-add-zero s) (letrec([ f( lambda(x,y) (cons  (cons x y)  (lambda())   ) ])) )
+;(letrec ([id ...]) body ... )
+;(define (stream-add-zero s) (letrec ([f (lambda(x)    (cons (cons 0 (car (s))) (lambda() (f 2)))    )])
 
-;this returns exactly the same thing as (cat-then-dog) if we call (returnstream cat-then-dog)
-;except for the very first element, which is the pair 0 . "cat.jpg" (if called with cat then dog
-(define (returnstream s) (cons (cons (car (zeros)) (car (s))) (cdr (s))))
+; 7) stream-add-zero
+(define (stream-add-zero s) (letrec
+           ([f (lambda(sprime)
+              (cons (cons 0 (car (sprime)))
+                    (lambda() (f (cdr (sprime)))))
+           )])
+  (lambda() (f s))))
 
+; 8) cycle-lists
+;This produces a stream that cycles two lists, and resets to the beginning if
+;the index of the helper function exceeds either of the list lengths.
+;It uses the modulus operator on n, n+1 etc with the list length: n % listLength
+(define (cycle-lists xs ys)
+  (letrec ([aux (lambda(n) (cons
+                             (cons (list-ref xs (modulo n (length xs))) (list-ref ys (modulo n (length ys))))
+                             (lambda() (aux(+ n 1)))
+                           )
+           )])
+           (lambda() (aux 0))
+  )
+)
 
+; 9) vector-assoc
 
 (provide sequence)
 (provide string-append-map)
@@ -90,3 +100,5 @@
 (provide stream-for-n-steps)
 (provide funny-number-stream)
 (provide cat-then-dog)
+(provide stream-add-zero)
+(provide cycle-lists)
