@@ -93,6 +93,29 @@
 )
 
 ; 9) vector-assoc
+; adds a vector of integer values into an accumulator
+(define (vector-assoc val vec)
+  ( letrec [(f (lambda(n)
+                 ;iterate through list until n = 0
+                 ;if n == 0 were at the end with no match
+                 (if (= n 0)
+                     ;then return false
+                     #f
+                     ;else
+                           ;is the vector element a pair?
+                     (cond [ (pair? (vector-ref vec (- n 1)))
+                                         (if ( = val (car (vector-ref vec (- n 1))))
+                                            ;return the pair assoc with the val
+                                            (vector-ref vec (- n 1))
+                                            ;else call f again with n-1
+                                            (f(- n 1) ))]
+                           ;else its not a pair, continue on next iteration
+                           [else (f(- n 1) )]
+                      )
+                  )))]
+     (f (vector-length vec))
+  )
+)
 
 (provide sequence)
 (provide string-append-map)
@@ -102,3 +125,4 @@
 (provide cat-then-dog)
 (provide stream-add-zero)
 (provide cycle-lists)
+(provide vector-assoc)
