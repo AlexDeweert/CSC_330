@@ -93,7 +93,6 @@
 )
 
 ; 9) vector-assoc
-; adds a vector of integer values into an accumulator
 (define (vector-assoc val vec)
   ( letrec [(f (lambda(n)
                  ;iterate through list until n = 0
@@ -110,12 +109,44 @@
                                             ;else call f again with n-1
                                             (f(- n 1) ))]
                            ;else its not a pair, continue on next iteration
-                           [else (f(- n 1) )]
+                           [#t (f(- n 1) )]
                       )
                   )))]
      (f (vector-length vec))
   )
 )
+
+; 10) cached-assoc
+; the returned function returns the same thing as (assoc v xs)
+; but we're optimizing the behavior of (funk) to use a cache vector
+(define (cached-assoc xs n)
+  ;define the cache which is a vector size n
+  (letrec [ (cache (make-vector n #f))
+            (cache-count 0) ]
+          
+  ;init the vector with #f
+  ;(vector-fill! cache #f)
+  ;return a function that behaves the same way (assoc v xs) does but called like (assoc v) using existing xs in the cached-assoc environment
+  ;when the return function is called, check cache to see if the element v exists in cache, if yes, return it, if no return false
+  (lambda(v) 
+              ;first check cache for existence of v (iterate through cache looking for any pair with (car x) == v
+              (let [(cache-result (vector-assoc v cache))]
+                ;if v is in the car of a pair in cache return the pair
+                (cond
+                  [ (pair? cache-result) cache-result ]
+                  ;[ (pair? cache-result) (begin (print "cached result: ") cache-result) ]
+                  [ (not(pair? cache-result))
+                      ;does both (the cond operator executes all in [...] if the check is true
+                      (let [(assoc-result (assoc v xs))] (if (pair? assoc-result)
+                                                               ;if the call to assoc is pair, then store in cache (round robin)
+                                                               ;places new value at cache location cache-count % n, updates cache count, returns result
+                                                               (begin (vector-set! cache (modulo cache-count n) assoc-result) (set! cache-count (+ cache-count 1)) assoc-result)
+                                                               ;else return false
+                                                               #f ))]  
+                ;(if(pair? cache-result) (begin (print "cached result: ") cache-result) (begin (print "not in cache, calld assoc: ") (assoc v xs)))
+                ;else if v is not in cache, then call (assoc v xs) to retrieve v from xs
+                )
+               ))))
 
 (provide sequence)
 (provide string-append-map)
@@ -126,3 +157,4 @@
 (provide stream-add-zero)
 (provide cycle-lists)
 (provide vector-assoc)
+(provide cached-assoc)
