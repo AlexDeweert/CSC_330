@@ -1,5 +1,12 @@
 #lang racket
 
+; Homework 4
+; University of Victoria
+; CSC 330 Fall 2018
+; Prof. D.M. German
+; Student: Alex L. Deweert
+; ID: V00855767
+
 ; 0) cube an integer
 (define (cube x)
   (* x x x))
@@ -15,12 +22,10 @@
   (map (lambda(x) (string-append x suffix)) xs))
 
 ; 3) list-nth-mod
-;TODO make an error handler for the test file
 (define (list-nth-mod xs n)
   (cond [ (< n 0) (error "list-nth-mod: negative number")]
         [ (eq? xs null) (error "list-nth-mod: empty list")]
         [ #t (list-ref xs (remainder n (length xs)))]))
-
 
 ; 4) stream-for-n-steps
 (define (stream-for-n-steps stream n)
@@ -46,15 +51,8 @@
                                      (* -1 (- x 1))
                                      ;else
                                      (+ x 1 )))
-                                 )
-                      )
-                )
-              )
-          ]
-         )
-   (lambda() (f 1))
-  )
-)
+                                 ))))])
+          (lambda() (f 1))))
 
 ; 6) cat-then-dog
 (define cat-then-dog (
@@ -62,13 +60,6 @@
    (lambda() (f "cat.jpg"))
   )
 )
-
-;stream with zeros
-(define zeros ( lambda() (cons 0 zeros) ))
-
-;A STREAM IS A THUNK that when called produces a pair of (1) the first element in the sequence and (2) a THUNK that represents the stream for the second-infty elements
-;(letrec ([id ...]) body ... )
-;(define (stream-add-zero s) (letrec ([f (lambda(x)    (cons (cons 0 (car (s))) (lambda() (f 2)))    )])
 
 ; 7) stream-add-zero
 (define (stream-add-zero s) (letrec
@@ -79,9 +70,6 @@
   (lambda() (f s))))
 
 ; 8) cycle-lists
-;This produces a stream that cycles two lists, and resets to the beginning if
-;the index of the helper function exceeds either of the list lengths.
-;It uses the modulus operator on n, n+1 etc with the list length: n % listLength
 (define (cycle-lists xs ys)
   (letrec ([aux (lambda(n) (cons
                              (cons (list-ref xs (modulo n (length xs))) (list-ref ys (modulo n (length ys))))
@@ -118,14 +106,13 @@
 
 ; 10) cached-assoc
 ; the returned function returns the same thing as (assoc v xs)
-; but we're optimizing the behavior of (funk) to use a cache vector
+; but we're optimizing the behavior of returned f to use a cache vector
 (define (cached-assoc xs n)
   ;define the cache which is a vector size n
   (letrec [ (cache (make-vector n #f))
             (cache-count 0) ]
           
   ;init the vector with #f
-  ;(vector-fill! cache #f)
   ;return a function that behaves the same way (assoc v xs) does but called like (assoc v) using existing xs in the cached-assoc environment
   ;when the return function is called, check cache to see if the element v exists in cache, if yes, return it, if no return false
   (lambda(v) 
@@ -138,15 +125,20 @@
                   [ (not(pair? cache-result))
                       ;does both (the cond operator executes all in [...] if the check is true
                       (let [(assoc-result (assoc v xs))] (if (pair? assoc-result)
-                                                               ;if the call to assoc is pair, then store in cache (round robin)
-                                                               ;places new value at cache location cache-count % n, updates cache count, returns result
-                                                               (begin (vector-set! cache (modulo cache-count n) assoc-result) (set! cache-count (+ cache-count 1)) assoc-result)
-                                                               ;else return false
-                                                               #f ))]  
-                ;(if(pair? cache-result) (begin (print "cached result: ") cache-result) (begin (print "not in cache, calld assoc: ") (assoc v xs)))
-                ;else if v is not in cache, then call (assoc v xs) to retrieve v from xs
-                )
-               ))))
+                                         ;if the call to assoc is pair, then store in cache (round robin)
+                                         ;places new value at cache location cache-count % n, updates cache count, returns result
+                                         (begin (vector-set! cache (modulo cache-count n) assoc-result) (set! cache-count (+ cache-count 1)) assoc-result)
+                                         ;else return false
+                                         #f ))])))))
+
+; 11) while-less
+(define-syntax while-less
+  (syntax-rules (do) [ (while-less e1 do e2)
+                       (letrec [ (f (lambda(current-e2)   
+                                   (cond[ (< current-e2 e1) (f e2) ]
+                                        [#t])
+                                ))]
+   (f e2))]))
 
 (provide sequence)
 (provide string-append-map)
@@ -158,3 +150,4 @@
 (provide cycle-lists)
 (provide vector-assoc)
 (provide cached-assoc)
+(provide while-less)
