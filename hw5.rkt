@@ -20,15 +20,19 @@
 ;; a closure is not in "source" programs; it is what functions evaluate to
 (struct closure (env fun) #:transparent)
 
-;; Problem A
+;; Problem A-1
 (define (mupllist->racketlist lst)
   (cond [(apair? lst) (cons (mupllist->racketlist (apair-e1 lst)) (mupllist->racketlist (apair-e2 lst)))]
         [(int? lst) lst]
         [(var? lst) lst]
         [(aunit? lst) null]))
 
+;; Problem A-2
 (define (racketlist->mupllist lst)
- "CHANGE")
+  (cond [(null? lst) (aunit)]
+        [(int? lst) lst]
+        [(var? lst) lst]
+        [(list? lst) (apair (racketlist->mupllist (car lst)) (racketlist->mupllist (cdr lst)))]))
 
 ;; Problem B
 
