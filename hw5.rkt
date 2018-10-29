@@ -60,6 +60,16 @@
                (error "MUPL addition applied to non-number")))]
         ;; "CHANGE" add more cases here
         ;; one for each type of expression
+        [(int? e) e] ;simple add
+        [(fst? e) (apair-e1 (fst-e e))]
+        [(snd? e) (apair-e2 (snd-e e))]
+        [(aunit? e) e]
+        [(apair? e) e]
+        [(isaunit? e) (if (aunit? (isaunit-e e)) (int 1) (int 0))]
+        [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
+                            (eval-under-env (ifgreater-e3 e) env) ;e1 > e2 then e3
+                            (eval-under-env (ifgreater-e4 e) env))];e1 <= e2 then e4
+        
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
 ;; Do NOT change
