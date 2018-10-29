@@ -69,6 +69,16 @@
         [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
                             (eval-under-env (ifgreater-e3 e) env) ;e1 > e2 then e3
                             (eval-under-env (ifgreater-e4 e) env))];e1 <= e2 then e4
+
+
+        ;mlet: (eval-exp (mlet "x" (int 5) (var "x"))) returns (int 5)
+        ;we want to store the pair ("x" . (int 5)) in the env (which is a list of pairs)
+        ;*the env variable is an empty list to start
+        ;*****(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
+        
+        [(mlet? e) (eval-under-env ;we have to call eval-under-env in order to store the new env, its not enough to just cons onto env
+                    (mlet-body e) ;we call eval-under-env using (var "x") for example, (mlet-body e) should evaluate to the 3rd param of mlet
+                    (cons (cons (mlet-var e) (mlet-e e)) env))] ;then we cons the pair, for example, ("x" . (int 3)) onto the current env, and pass it as the new env
         
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
