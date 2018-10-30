@@ -79,6 +79,60 @@
         [(mlet? e) (eval-under-env ;we have to call eval-under-env in order to store the new env, its not enough to just cons onto env
                     (mlet-body e) ;we call eval-under-env using (var "x") for example, (mlet-body e) should evaluate to the 3rd param of mlet
                     (cons (cons (mlet-var e) (mlet-e e)) env))] ;then we cons the pair, for example, ("x" . (int 3)) onto the current env, and pass it as the new env
+
+
+        
+
+        ;If s1 and s2 are Racket strings and e is a MUPL expression, then (fun s1 s2 e)
+        ;is a MUPL expression (a function). In e, s1 is bound to the function itself (for recursion)
+        ;and s2 is bound to the (one) argument. Also, (fun #f s2 e) is allowed for anonymous
+        ;nonrecursive functions.
+
+        
+        ;in e, s1 is bound to the function itself (for recursion)
+        ;Either the function call is anonymous (ie f#) or its not (ie "incr")
+        ;if "fun-nameopt e" is anonymous, it will evaluate to #f, in that case, expression 2 will execute.
+        
+        [(fun? e) (if (not(fun-nameopt e))
+                        ;"function IS anonymous" --> the result is a closure (a pair: (code,env))
+                        (closure null e)
+                        ;"function NOT anonymous" --> exact same as result but maybe change in future
+                        (closure null e) ;***If the closure is not anon, then we extend the end with the fun name and its params
+                        )]
+
+
+        ;(struct closure (env fun))
+        ;(fun s1 s2 e) ==> (fun name-opt formal body)
+        ;(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
+        ;(struct call (funexp actual) #:transparent) ;; function call
+
+        ;evaluate the closures functions body, using the closures environment
+        ;need the environment of the function when calling eval-under-env (MIGHT NEED TO DO A LOOKUP!)
+
+        ;(call closure argument) --> we need to call the closure with the argument
+        ;ie// we call [ (closure (fun "incr" "x" (add (var "x") (int 1))) '()) ] with (int 42) should eval to (int 43)
+        ;need to call the closure with the argument
+        ;[(call? e) (eval-under-env (fun-body (call-funexp e)) (closure-env (eval-exp (call-funexp e))))]
+        [(call? e) (let* ([closure-val (eval-under-env (call-funexp e) env)]
+                          [arg-val (eval-under-env (call-actual e) env)]
+                          [closure-vals-env (closure-env closure-val)] ;<== closure-vals environment
+                          [closure-fun-body (fun-body (closure-fun closure-val))]
+                          
+                          ;*****(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
+                          ;(mlet "x" (int 5) (var "x")) <==extend the env (mlet s e1 e2)
+                          [extended-closure-result
+                           (eval-under-env (mlet (fun-formal (closure-fun closure-val)) arg-val closure-fun-body) closure-vals-env)])
+
+                     ;here we evaluate the closures-functions-body (ie (fun-body closure-val))
+                     ;using closure-val's environment
+                     ;(eval-under-env closure-fun-body extended-closure)
+                     ;closure-fun-body
+                     ;closure-vals-env
+                     ;arg-val
+                     extended-closure-result
+                   )
+         ]
+
         
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
