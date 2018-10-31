@@ -80,6 +80,7 @@
         ;we want to store the pair ("x" . (int 5)) in the env (which is a list of pairs)
         ;*the env variable is an empty list to start
         ;*****(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
+
         ; [[[   mlet s e1 e2 <==> mlet var e body   ]]]
         [(mlet? e)  (let*([first-expression-value (eval-under-env (mlet-e e) env)]
                           [extended-environment (cons (cons (mlet-var e) first-expression-value) env)])
@@ -105,18 +106,21 @@
 
 
         ;(struct closure (env fun))
-        ;(fun s1 s2 e) ==> (fun name-opt formal body)
-        ;(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
-        ;(struct call (funexp actual) #:transparent) ;; function call
+        ;(struct fun  (nameopt formal body))
+        ;(struct call (funexp actual))
         [(call? e) (let* ([closure-val (eval-under-env (call-funexp e) env)] ;first eval the closure to a value
                           [arg-val (eval-under-env (call-actual e) env)] ;second eval the argument to a value
                           [closure-vals-env (closure-env closure-val)] ;<== closure-vals environment
                           [closure-fun-body (fun-body (closure-fun closure-val))] ;get the closures function-body (which will be evaled using the closures extended env)
-                          [closure-fun-name (fun-nameopt (call-funexp e))]
-                          [closure-fun-arg-name (fun-formal (call-funexp e))]
+                          ;[closure-fun-name (fun-nameopt (call-funexp e))]
+                          [closure-fun-name (fun-nameopt (closure-fun closure-val))]
+                          [closure-fun-arg-name (fun-formal (closure-fun closure-val))]
                           [ext-closure-env-map-fn-name-to-closure (cons (cons closure-fun-name closure-val) closure-vals-env)]
                           [ext-closure-env-map-fn-arg-name-to-argval (cons (cons closure-fun-arg-name arg-val) ext-closure-env-map-fn-name-to-closure)])
                      (eval-under-env closure-fun-body ext-closure-env-map-fn-arg-name-to-argval)
+
+                     ;(eval-exp (call (fun #f "x" (var "x")) (int 5) )) //Normal call - works
+                     ;(eval-exp (call (mlet "x" (int 5)(fun "test" "x" (var "x"))) (int 100))) //Basic scope with call - fails
                    )
          ]
 
