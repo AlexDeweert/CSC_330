@@ -67,10 +67,13 @@
                     (if (apair? sub-expression-eval) (apair-e2 sub-expression-eval) sub-expression-eval))]
         [(aunit? e) e]
         [(apair? e) (apair  (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env ))]
-        [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0 ))];(if (aunit? (isaunit-e e)) (int 1) (int 0))]
-        [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
+        [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0 ))]
+        [(ifgreater? e) (let*([e1-val (int-num (eval-under-env (ifgreater-e1 e) env))]
+                             [e2-val (int-num (eval-under-env (ifgreater-e2 e) env))])
+                          (if (> e1-val e2-val)
                             (eval-under-env (ifgreater-e3 e) env) ;e1 > e2 then e3
-                            (eval-under-env (ifgreater-e4 e) env))];e1 <= e2 then e4
+                            (eval-under-env (ifgreater-e4 e) env) ;e1 <= e2 then e4
+                          ))]
 
 
         ;mlet: (eval-exp (mlet "x" (int 5) (var "x"))) returns (int 5)
