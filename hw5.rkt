@@ -61,11 +61,13 @@
         ;; "CHANGE" add more cases here
         ;; one for each type of expression
         [(int? e) e] ;simple add
-        [(fst? e) (apair-e1 (fst-e e))]
-        [(snd? e) (apair-e2 (snd-e e))]
+        [(fst? e) (let([sub-expression-eval (eval-under-env (fst-e e) env)])
+                    (if (apair? sub-expression-eval) (apair-e1 sub-expression-eval) sub-expression-eval))]
+        [(snd? e) (let([sub-expression-eval (eval-under-env (snd-e e) env)])
+                    (if (apair? sub-expression-eval) (apair-e2 sub-expression-eval) sub-expression-eval))]
         [(aunit? e) e]
-        [(apair? e) e]
-        [(isaunit? e) (if (aunit? (isaunit-e e)) (int 1) (int 0))]
+        [(apair? e) (apair  (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env ))]
+        [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0 ))];(if (aunit? (isaunit-e e)) (int 1) (int 0))]
         [(ifgreater? e) (if (> (int-num (ifgreater-e1 e)) (int-num (ifgreater-e2 e)))
                             (eval-under-env (ifgreater-e3 e) env) ;e1 > e2 then e3
                             (eval-under-env (ifgreater-e4 e) env))];e1 <= e2 then e4
@@ -75,13 +77,11 @@
         ;we want to store the pair ("x" . (int 5)) in the env (which is a list of pairs)
         ;*the env variable is an empty list to start
         ;*****(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
-        
-        [(mlet? e) (eval-under-env ;we have to call eval-under-env in order to store the new env, its not enough to just cons onto env
-                    (mlet-body e) ;we call eval-under-env using (var "x") for example, (mlet-body e) should evaluate to the 3rd param of mlet
-                    (cons (cons (mlet-var e) (mlet-e e)) env))] ;then we cons the pair, for example, ("x" . (int 3)) onto the current env, and pass it as the new env
-
-
-        
+        ; [[[   mlet s e1 e2 <==> mlet var e body   ]]]
+        [(mlet? e)  (let*([first-expression-value (eval-under-env (mlet-e e) env)]
+                          [extended-environment (cons (cons (mlet-var e) first-expression-value) env)])
+                      (eval-under-env (mlet-body e) extended-environment)
+                     )]        
 
         ;If s1 and s2 are Racket strings and e is a MUPL expression, then (fun s1 s2 e)
         ;is a MUPL expression (a function). In e, s1 is bound to the function itself (for recursion)
@@ -95,9 +95,9 @@
         
         [(fun? e) (if (not(fun-nameopt e))
                         ;"function IS anonymous" --> the result is a closure (a pair: (code,env))
-                        (closure null e)
+                        (closure env e)
                         ;"function NOT anonymous" --> exact same as result but maybe change in future
-                        (closure null e) ;***If the closure is not anon, then we extend the end with the fun name and its params
+                        (closure env e) ;***If the closure is not anon, then we extend the end with the fun name and its params
                         )]
 
 
@@ -105,31 +105,15 @@
         ;(fun s1 s2 e) ==> (fun name-opt formal body)
         ;(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
         ;(struct call (funexp actual) #:transparent) ;; function call
-
-        ;evaluate the closures functions body, using the closures environment
-        ;need the environment of the function when calling eval-under-env (MIGHT NEED TO DO A LOOKUP!)
-
-        ;(call closure argument) --> we need to call the closure with the argument
-        ;ie// we call [ (closure (fun "incr" "x" (add (var "x") (int 1))) '()) ] with (int 42) should eval to (int 43)
-        ;need to call the closure with the argument
-        ;[(call? e) (eval-under-env (fun-body (call-funexp e)) (closure-env (eval-exp (call-funexp e))))]
-        [(call? e) (let* ([closure-val (eval-under-env (call-funexp e) env)]
-                          [arg-val (eval-under-env (call-actual e) env)]
+        [(call? e) (let* ([closure-val (eval-under-env (call-funexp e) env)] ;first eval the closure to a value
+                          [arg-val (eval-under-env (call-actual e) env)] ;second eval the argument to a value
                           [closure-vals-env (closure-env closure-val)] ;<== closure-vals environment
-                          [closure-fun-body (fun-body (closure-fun closure-val))]
-                          
-                          ;*****(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
-                          ;(mlet "x" (int 5) (var "x")) <==extend the env (mlet s e1 e2)
-                          [extended-closure-result
-                           (eval-under-env (mlet (fun-formal (closure-fun closure-val)) arg-val closure-fun-body) closure-vals-env)])
-
-                     ;here we evaluate the closures-functions-body (ie (fun-body closure-val))
-                     ;using closure-val's environment
-                     ;(eval-under-env closure-fun-body extended-closure)
-                     ;closure-fun-body
-                     ;closure-vals-env
-                     ;arg-val
-                     extended-closure-result
+                          [closure-fun-body (fun-body (closure-fun closure-val))] ;get the closures function-body (which will be evaled using the closures extended env)
+                          [closure-fun-name (fun-nameopt (call-funexp e))]
+                          [closure-fun-arg-name (fun-formal (call-funexp e))]
+                          [ext-closure-env-map-fn-name-to-closure (cons (cons closure-fun-name closure-val) closure-vals-env)]
+                          [ext-closure-env-map-fn-arg-name-to-argval (cons (cons closure-fun-arg-name arg-val) ext-closure-env-map-fn-name-to-closure)])
+                     (eval-under-env closure-fun-body ext-closure-env-map-fn-arg-name-to-argval)
                    )
          ]
 
