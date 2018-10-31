@@ -69,7 +69,7 @@
         [(apair? e) (apair  (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env ))]
         [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0 ))]
         [(ifgreater? e) (let*([e1-val (int-num (eval-under-env (ifgreater-e1 e) env))]
-                             [e2-val (int-num (eval-under-env (ifgreater-e2 e) env))])
+                              [e2-val (int-num (eval-under-env (ifgreater-e2 e) env))])
                           (if (> e1-val e2-val)
                             (eval-under-env (ifgreater-e3 e) env) ;e1 > e2 then e3
                             (eval-under-env (ifgreater-e4 e) env) ;e1 <= e2 then e4
@@ -163,16 +163,12 @@
                      (add v1 v2)
                      )]
   )
-;  (letrec([tempenv (
-;
-;                    
-;                    
-;                    )])
-;    (envlookup tempenv e2) )
-  
 )
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4)
+  ;the intersection of (ifgreater e1 e2 e3 e4) and (ifgreater e2 e1 e3 e4) will be the same if e1 and e2 are equal
+  (ifgreater (ifgreater e1 e2 e1 e2) (ifgreater e2 e1 e1 e2) e4 e3)
+)
 
 ;; Problem D
 
