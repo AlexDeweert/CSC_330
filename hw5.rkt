@@ -62,9 +62,9 @@
         ;; one for each type of expression
         [(int? e) e] ;simple add
         [(fst? e) (let([sub-expression-eval (eval-under-env (fst-e e) env)])
-                    (if (apair? sub-expression-eval) (apair-e1 sub-expression-eval) sub-expression-eval))]
+                    (if (apair? sub-expression-eval) (apair-e1 sub-expression-eval) (error "MUPL fst applied to non-pair")))]
         [(snd? e) (let([sub-expression-eval (eval-under-env (snd-e e) env)])
-                    (if (apair? sub-expression-eval) (apair-e2 sub-expression-eval) sub-expression-eval))]
+                    (if (apair? sub-expression-eval) (apair-e2 sub-expression-eval) (error "MUPL snd applied to non-pair")))]
         [(aunit? e) e]
         [(apair? e) (apair  (eval-under-env (apair-e1 e) env) (eval-under-env (apair-e2 e) env ))]
         [(isaunit? e) (if (aunit? (eval-under-env (isaunit-e e) env)) (int 1) (int 0 ))]
@@ -110,7 +110,7 @@
         ;(struct call (funexp actual))
         [(call? e) (let* ([closure-val (eval-under-env (call-funexp e) env)] ;first eval the closure to a value
                           [arg-val (eval-under-env (call-actual e) env)] ;second eval the argument to a value
-                          [closure-vals-env (closure-env closure-val)] ;<== closure-vals environment
+                          [closure-vals-env (if (closure? closure-val) (closure-env closure-val) (error "MUPL call with non-function"))] ;<== closure-vals environment
                           [closure-fun-body (fun-body (closure-fun closure-val))] ;get the closures function-body (which will be evaled using the closures extended env)
                           [closure-fun-name (fun-nameopt (closure-fun closure-val))]
                           [closure-fun-arg-name (fun-formal (closure-fun closure-val))]
@@ -147,7 +147,7 @@
 ;; Problem C
 
 (define (ifaunit e1 e2 e3)
-  (if (aunit? e1) e2 e3)
+  (ifgreater (isaunit e1) (int 0) e2 e3)
 )
 
 (define (mlet* lstlst e2)
@@ -166,13 +166,10 @@
 )
 
 (define (ifeq e1 e2 e3 e4)
-  ;the intersection of (ifgreater e1 e2 e3 e4) and (ifgreater e2 e1 e3 e4) will be the same if e1 and e2 are equal
   (ifgreater (ifgreater e1 e2 e1 e2) (ifgreater e2 e1 e1 e2) e4 e3)
 )
 
 ;; Problem D
-
-(define mupl-map "CHANGE")
 ;; this binding is a bit tricky. it must return a function.
 ;; the first two lines should be something like this:
 ;;
@@ -185,7 +182,50 @@
 ;;    (call funexp1 funexp2 exp3)
 ;; we do
 ;;    (call (call funexp1 funexp2) exp3)
-;; 
+;;
+
+;(struct closure (env fun))
+;(struct var  (string) #:transparent)  ;; a variable, e.g., (var "foo")
+;(struct int  (num)    #:transparent)  ;; a constant number, e.g., (int 17)
+;(struct add  (e1 e2)  #:transparent)  ;; add two expressions
+;(struct ifgreater (e1 e2 e3 e4)    #:transparent) ;; if e1 > e2 then e3 else e4
+;(struct fun  (nameopt formal body) #:transparent) ;; a recursive(?) 1-argument function
+;(struct call (funexp actual)       #:transparent) ;; function call
+;(struct mlet (var e body) #:transparent) ;; a local binding (let var = e in body)
+;(struct apair (e1 e2)     #:transparent) ;; make a new pair
+;(struct fst  (e)    #:transparent) ;; get first part of a pair
+;(struct snd  (e)    #:transparent) ;; get second part of a pair
+;(struct aunit ()    #:transparent) ;; unit value -- good for ending a list
+;(struct isaunit (e) #:transparent) ;; evaluate to 1 if e is unit else 0
+
+;1) We're binding a mupl-function to the Racket variable mupl-map
+;2) This muple-function "acts" like a map (applies a function to elements of a list)
+;3) This muple-function: TAKES a muple-function and RETURNS a muple-function.
+;4) The RETURNED function should take a mupl-list
+;(call (call mupl-map (fun "addone" "x" (add (var "x") (int 2)))) (aunit))
+
+;first try to make a basic map-like mupl function that applies a mupl function over a mupl list
+(define mupl-map
+  (fun "mupl-map" "f"
+       (fun #f "lst"
+            (ifaunit (var "lst") (aunit) (apair (call (var "f") (fst (var "lst"))) (call (call (var "mupl-map") (var "f")) (snd (var "lst"))))))))
+                                                                       
+  
+;  (letrec ([xs (list 1 2 3)]
+;           [aux (lambda(xs-prime acc) (cond[(aunit? xs-prime) acc]
+;                                           [(apair? xs-prime) (aux (apair-e2 xs-prime) (cons (f (int-num (apair-e1 xs-prime))) acc))]))])
+;    (aux xs null)
+;  )
+
+  ;does a recursive let binding with: xs ==> mupllist, and aux ==> a helper function that iterates over the mupllist
+  ;Need:
+  ; 1) mupl function that iterates over a mupllist
+  ; 2) on each evaluation on that mupllist, we have an x, which is (apair-e1 xs)
+  ; 3) every time x is encountered, we need to apply a mupl-function to that value
+
+  
+  
+
 
 (define mupl-mapAddN
   (mlet "map" mupl-map
