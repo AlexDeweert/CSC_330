@@ -4,11 +4,12 @@ require_relative './hw6provided'
 require_relative './hw6assignment'
 
 def runTetris
-  Tetris.new 
+  Tetris.new
   mainLoop
 end
 
 def runMyTetris
+  puts "running MyTetris"
   MyTetris.new
   mainLoop
 end
@@ -24,4 +25,3 @@ elsif ARGV[0] == "original"
 else
   puts "usage: hw6runner.rb [enhanced | original]"
 end
-
