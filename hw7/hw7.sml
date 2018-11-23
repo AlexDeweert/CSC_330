@@ -196,3 +196,14 @@ fun eval_prog (e,env) =
 (* CHANGE: Add a case for Shift expressions *)
 
 (* CHANGE: Add function preprocess_prog of type geom_exp -> geom_exp *)
+fun preprocess_prog g =
+  case g of
+       LineSegment(a,b,c,d) =>
+        if real_close(a,c) andalso real_close(b,d) 
+          then Point(a,b)
+        else if not(real_close(a,c)) andalso a < c
+          then g
+        else if real_close(a,c) andalso b < d
+          then g
+        else LineSegment(c,d,a,b)
+     | _ => raise Impossible "Expected LineSegment";
