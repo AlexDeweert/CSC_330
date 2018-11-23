@@ -1,13 +1,10 @@
 (* Homework 7, hw7.sml (see also Ruby code) *)
+(* CSC 330 UVIC Fall 2018
+ * Prof. D.M. German
+ * Student: Alex (Lee) DEWEERT
+ * ID: V00855767
+ *)
 
-(* Do not make changes to this code except where you see comments containing
-   the word CHANGE. *)
-
-(* expressions in a little language for 2D geometry objects
-   values: points, lines, vertical lines, line segments
-   other expressions: intersection of two expressions, lets, variables, 
-                      (shifts added by you)
-*)
 datatype geom_exp = 
            NoPoints
 	 | Point of real * real (* represents point (x,y) *)
@@ -17,6 +14,7 @@ datatype geom_exp =
 	 | Intersect of geom_exp * geom_exp (* intersection expression *)
 	 | Let of string * geom_exp * geom_exp (* let s = e1 in e2 *)
 	 | Var of string
+         | Shift of real * real * geom_exp
 (* CHANGE add shifts for expressions of the form Shift(deltaX, deltaY, exp *)
 
 exception BadProgram of string
@@ -193,10 +191,19 @@ fun eval_prog (e,env) =
 	   | SOME (_,v) => v)
       | Let(s,e1,e2) => eval_prog (e2, ((s, eval_prog(e1,env)) :: env))
       | Intersect(e1,e2) => intersect(eval_prog(e1,env), eval_prog(e2, env))
+      | Shift(dx,dy,e) =>
+          case e of
+              NoPoints => e
+            | Point(x,y) => Point(x+dx,y+dy)
+            | Line(m,b) => Line(m, b+dy-m*dx)
+            | VerticalLine(x) => VerticalLine(x+dx)
+            | LineSegment(a,b,c,d) => LineSegment(a+dx,b+dy,c+dx,d+dy)
+            | Var s => eval_prog(Shift(dx,dy,eval_prog(e,env)),env)
+            | _ => raise BadProgram("Can only apply shift to geoms");
 (* CHANGE: Add a case for Shift expressions *)
 
 (* CHANGE: Add function preprocess_prog of type geom_exp -> geom_exp *)
-fun preprocess_prog g =
+fun preprocess_prog (g:geom_exp) =
   case g of
        LineSegment(a,b,c,d) =>
         if real_close(a,c) andalso real_close(b,d) 
@@ -206,4 +213,4 @@ fun preprocess_prog g =
         else if real_close(a,c) andalso b < d
           then g
         else LineSegment(c,d,a,b)
-     | _ => raise Impossible "Expected LineSegment";
+     | _ => g;
