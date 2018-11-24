@@ -114,8 +114,24 @@ class Point < GeometryValue
     @x = x
     @y = y
   end
-  def eval_prog
+  def eval_prog env
     self
+  end
+  def preprocess_prog
+    self
+  end
+  def shift(dx,dy)
+    Point.new(@x+dx,@y+dy)
+  end
+  def intersect other
+    other.intersectPoint self # will be NoPoints but follow double-dispatch
+  end
+  def intersectPoint v
+    if real_close_point(v.x,v.y,@x,@y)
+      Point.new(@x,@y)
+    else
+      NoPoints.new()
+    end
   end
 end
 
@@ -127,6 +143,15 @@ class Line < GeometryValue
     @m = m
     @b = b
   end
+  def eval_prog env
+    self
+  end
+  def preprocess_prog
+    self
+  end
+  def shift(dx,dy)
+    Line.new(@m,@b+dy-@m*dx)
+  end
 end
 
 class VerticalLine < GeometryValue
@@ -135,6 +160,15 @@ class VerticalLine < GeometryValue
   attr_reader :x
   def initialize x
     @x = x
+  end
+  def eval_prog env
+    self
+  end
+  def preprocess_prog
+    self
+  end
+  def shift(dx,dy)
+    VerticalLine.new(@x+dx)
   end
 end
 
@@ -151,10 +185,25 @@ class LineSegment < GeometryValue
     @x2 = x2
     @y2 = y2
   end
+  def eval_prog env
+    self
+  end
+  def preprocess_prog
+    if real_close(@x1,@x2) && real_close(@y1,@y2)
+      Point.new(@x1,@y1)
+    elsif !real_close(@x1,@x2) && @x1 > @x2 || real_close(@x1,@x2) && @y1 > @y2
+      LineSegment.new(@x2,@y2,@x1,@y1)
+    elsif @x1 < @x2 || real_close(@x1,@x2) && @y1 < @y2
+      self
+    end
+  end
+  def shift(dx,dy)
+    LineSegment.new(@x1+dx,@y1+dy,@x2+dx,@y2+dy)
+  end
 end
 
 # Note: there is no need for getter methods for the non-value classes
-
+#################################################################################################################
 class Intersect < GeometryExpression
   # *add* methods to this class -- do *not* change given code and do not
   # override any methods
@@ -162,10 +211,14 @@ class Intersect < GeometryExpression
     @e1 = e1
     @e2 = e2
   end
+  def eval_prog env
+    @e1.eval_prog(env).intersect @e2.eval_prog(env)
+  end
   def preprocess_prog
-    self
+    Intersect.new(@e1.preprocess_prog,@e2.preprocess_prog)
   end
 end
+#################################################################################################################
 
 class Let < GeometryExpression
   # *add* methods to this class -- do *not* change given code and do not
@@ -177,24 +230,18 @@ class Let < GeometryExpression
     @e2 = e2
   end
   def eval_prog env
-    #we're binding a string s to the evaluation result of e1
-    #and using the resulting environment to evaluate e2
-    #here we have a Let class object which takes a string, and two expressions
-    #which are either GeometricExpression or GeometricValue subclasses
-    #each of these subclasses will have their own eval_prog which will
-    #evaluate themselves within the environment passed in
-
-    #it seems that we have to append to the env param here, the result
-    #of evaluating [s,e1.eval_prog
-    #since Var.eval_prog looks up values via env.assoc, and we want
-    #shadowing to work properly, we will use arr.unshift to add new env elements
-    new_env = Array.new(env) #creates  a copy of env
-    new_env.unshift([@s,@e1.eval_prog])
+    #creates  a copy of env
+    new_env = Array.new(env)
+    #adds the Let binding to the new env
+    #but adds at the beginning for shadowing to
+    #work (since Var does left-right lookup)
+    new_env.unshift([@s,@e1.eval_prog(env)])
+    #returns the evaluation of e2 with the newly
+    #created environment
     @e2.eval_prog(new_env)
-
   end
   def preprocess_prog
-    self
+    Let.new(@s,@e1.preprocess_prog,@e2.preprocess_prog)
   end
 end
 
@@ -207,7 +254,7 @@ class Var < GeometryExpression
   def eval_prog env # remember: do not change this method
     pr = env.assoc @s
     raise "undefined variable" if pr.nil?
-    puts "Var eval_prog => got: " + pr[0].to_s + " " + pr[1].to_s
+    #puts "Var eval_prog => got: " + pr[0].to_s + " " + pr[1].to_s
     pr[1]
   end
   def preprocess_prog
@@ -223,7 +270,10 @@ class Shift < GeometryExpression
     @dy = dy
     @e = e
   end
+  def eval_prog env
+    @e.eval_prog(env).shift(@dx,@dy)
+  end
   def preprocess_prog
-    self
+    Shift.new(@dx,@dy,@e.preprocess_prog)
   end
 end
