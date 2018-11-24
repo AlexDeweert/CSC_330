@@ -1,26 +1,8 @@
-# a little language for 2D geometry objects
-
-# each subclass of GeometryExpression, including subclasses of GeometryValue,
-#  needs to respond to messages preprocess_prog and eval_prog
-#
-# each subclass of GeometryValue additionally needs:
-#   * shift
-#   * intersect, which uses the double-dispatch pattern
-#   * intersectPoint, intersectLine, and intersectVerticalLine for
-#       for being called by intersect of appropriate clases and doing
-#       the correct intersection calculuation
-#   * (We would need intersectNoPoints and intersectLineSegment, but these
-#      are provided by GeometryValue and should not be overridden.)
-#   *  intersectWithSegmentAsLineResult, which is used by
-#      intersectLineSegment as described in the assignment
-#
-# you can define other helper methods, but will not find much need to
-
-# Note: geometry objects should be immutable: assign to fields only during
-#       object construction
-
-# Note: For eval_prog, represent environments as arrays of 2-element arrays
-# as described in the assignment
+# Homework 7, hw7.rb (see also SML code)
+# CSC 330 UVIC Fall 2018
+# Prof. D.M. German
+# Student: Alex (Lee) DEWEERT
+# ID: V00855767
 
 class GeometryExpression
   # do *not* change this class definition
@@ -348,7 +330,6 @@ class LineSegment < GeometryValue
 end
 
 # Note: there is no need for getter methods for the non-value classes
-#################################################################################################################
 class Intersect < GeometryExpression
   # *add* methods to this class -- do *not* change given code and do not
   # override any methods
@@ -363,7 +344,6 @@ class Intersect < GeometryExpression
     Intersect.new(@e1.preprocess_prog,@e2.preprocess_prog)
   end
 end
-#################################################################################################################
 
 class Let < GeometryExpression
   # *add* methods to this class -- do *not* change given code and do not
