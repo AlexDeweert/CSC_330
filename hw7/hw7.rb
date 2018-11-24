@@ -201,6 +201,9 @@ class Line < GeometryValue
   def intersectVerticalLine v
     Point.new(v.x,@m*v.x+@b)
   end
+  def intersectWithSegmentAsLineResult seg
+    seg
+  end
 end
 
 class VerticalLine < GeometryValue
@@ -234,6 +237,9 @@ class VerticalLine < GeometryValue
     else
       NoPoints.new()
     end
+  end
+  def intersectWithSegmentAsLineResult seg
+    seg
   end
 end
 
@@ -269,8 +275,74 @@ class LineSegment < GeometryValue
     other.intersectLineSegment self # will be NoPoints but follow double-dispatch
   end
   def intersectWithSegmentAsLineResult seg
+    x1start = @x1
+    y1start = @y1
+    x1end = @x2
+    y1end = @y2
+    x2start = seg.x1
+    y2start = seg.y1
+    x2end = seg.x2
+    y2end = seg.y2
+
+    #default if y1start < y2start
+    aXstart = @x1
+    aYstart = @y1
+    aXend = @x2
+    aYend = @y2
+    bXstart = seg.x1
+    bYstart = seg.y1
+    bXend = seg.x2
+    bYend = seg.y2
+
+    if real_close(x1start,x1end)
+        if !(y1start < y2start)
+          bXstart = @x1
+          bYstart = @y1
+          bXend = @x2
+          bYend = @y2
+          aXstart = seg.x1
+          aYstart = seg.y1
+          aXend = seg.x2
+          aYend = seg.y2
+        end
+        if real_close(aYend,bYstart)
+          Point.new(aXend,aYend)
+        elsif aYend < bYstart
+          NoPoints.new()
+        elsif aYend > bYend
+          LineSegment.new(bXstart,bYstart,bXend,bYend)
+        else
+          LineSegment.new(bXstart,bYstart,aXend,aYend)
+        end
+    else
+      if !(x1start < x2start)
+          bXstart = @x1
+          bYstart = @y1
+          bXend = @x2
+          bYend = @y2
+          aXstart = seg.x1
+          aYstart = seg.y1
+          aXend = seg.x2
+          aYend = seg.y2
+      end
+      if real_close(aXend,bXstart)
+        Point.new(aXend,aYend)
+      elsif aXend < bXstart
+        NoPoints.new()
+      elsif aXend > bXend
+        LineSegment.new(bXstart,bYstart,bXend,bYend)
+      else
+        LineSegment.new(bXstart,bYstart,aXend,aYend)
+      end
+    end
   end
   def intersectPoint v
+    v.intersectLineSegment self
+  end
+  def intersectLine v
+    v.intersectLineSegment self
+  end
+  def intersectVerticalLine v
     v.intersectLineSegment self
   end
 end
