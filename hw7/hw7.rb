@@ -133,6 +133,33 @@ class Point < GeometryValue
       NoPoints.new()
     end
   end
+  def intersectLine v
+    if real_close(@y, v.m*@x+v.b)
+      Point.new(@x,@y)
+    else
+      NoPoints.new()
+    end
+  end
+  def intersectVerticalLine v
+    if real_close(@x, v.x)
+      Point.new(@x,@y)
+    else
+      NoPoints.new()
+    end
+  end
+  def intersectWithSegmentAsLineResult seg
+    #x0 = @x, y0 = @y
+    if inbetween(@x,seg.x1,seg.x2) && inbetween(@y,seg.y1,seg.y2)
+      Point.new(@x,@y)
+    else
+      NoPoints.new()
+    end
+  end
+  def inbetween (v,end1,end2)
+    (end1-GeometryExpression::Epsilon <= v && v <= end2 + GeometryExpression::Epsilon) ||
+    (end2-GeometryExpression::Epsilon <= v && v <= end1 + GeometryExpression::Epsilon)
+  end
+
 end
 
 class Line < GeometryValue
@@ -152,6 +179,28 @@ class Line < GeometryValue
   def shift(dx,dy)
     Line.new(@m,@b+dy-@m*dx)
   end
+  def intersect other
+    other.intersectLine self
+  end
+  def intersectPoint v
+    v.intersectLine(self)
+  end
+  def intersectLine v
+    if real_close(@m,v.m) then
+      if real_close(@b,v.b)
+        Line.new(@m,@b)
+      else
+        NoPoints.new()
+      end
+    else
+      x = (v.b-@b)/(@m-v.m)
+      y = @m*x+@b
+      Point.new(x,y)
+    end
+  end
+  def intersectVerticalLine v
+    Point.new(v.x,@m*v.x+@b)
+  end
 end
 
 class VerticalLine < GeometryValue
@@ -169,6 +218,22 @@ class VerticalLine < GeometryValue
   end
   def shift(dx,dy)
     VerticalLine.new(@x+dx)
+  end
+  def intersect other
+    other.intersectVerticalLine self
+  end
+  def intersectPoint v
+    v.intersectVerticalLine(self)
+  end
+  def intersectLine v
+    v.intersectVerticalLine(self)
+  end
+  def intersectVerticalLine v
+    if real_close(@x,v.x)
+      self
+    else
+      NoPoints.new()
+    end
   end
 end
 
@@ -199,6 +264,14 @@ class LineSegment < GeometryValue
   end
   def shift(dx,dy)
     LineSegment.new(@x1+dx,@y1+dy,@x2+dx,@y2+dy)
+  end
+  def intersect other
+    other.intersectLineSegment self # will be NoPoints but follow double-dispatch
+  end
+  def intersectWithSegmentAsLineResult seg
+  end
+  def intersectPoint v
+    v.intersectLineSegment self
   end
 end
 
